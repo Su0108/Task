@@ -1,4 +1,5 @@
 {
+  "id": "task-management-app",
   "name": "Task Management",
   "short_name": "TaskMgmt",
   "description": "Organize. Assign. Deliver. A unified workspace for creators & admins.",
@@ -9,6 +10,7 @@
   "orientation": "portrait",
   "scope": "/",
   "lang": "en",
+  "categories": ["productivity", "business"],
   "icons": [
     {
       "src": "https://via.placeholder.com/192x192/0d1117/00e5ff?text=TM",
@@ -21,6 +23,15 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://via.placeholder.com/540x720/0d1117/00e5ff?text=Task+Management",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Task Management App"
     }
   ]
 }
