@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Task Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:#0d1117;min-height:100vh;overflow-x:hidden;color:#f0f4f8;}
+  ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px;}
+  input,textarea,select{font-family:'DM Sans',sans-serif;outline:none;}
+  button{cursor:pointer;font-family:'DM Sans',sans-serif;}
+  select option{background:#1a1f2e;color:#f0f4f8;}
+  .orb-red{position:fixed;top:-120px;left:-120px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(255,77,109,0.28) 0%,transparent 70%);filter:blur(60px);pointer-events:none;z-index:0;animation:orbPulse 8s ease-in-out infinite;}
+  .orb-green{position:fixed;bottom:-120px;right:-120px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(0,245,160,0.22) 0%,transparent 70%);filter:blur(60px);pointer-events:none;z-index:0;animation:orbPulse 10s ease-in-out infinite reverse;}
+  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border:1px solid rgba(255,255,255,0.10);border-radius:20px;box-shadow:0 8px 64px rgba(0,0,0,0.6);}
+  .glass-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,0.4);}
+  .screen{display:none;min-height:100vh;position:relative;z-index:1;}
+  .screen.active{display:flex;animation:fadeIn 0.5s ease;}
+  @keyframes orbPulse{0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.12);opacity:1;}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes toastIn{from{opacity:0;transform:translateX(60px);}to{opacity:1;transform:translateX(0);}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:11px;color:rgba(240,244,248,0.45);letter-spacing:0.1em;text-transform:uppercase;}
+  .field input,.field textarea,.field select{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-bottom:2px solid #00e5ff;border-radius:8px 8px 0 0;padding:10px 14px;color:#f0f4f8;font-size:14px;width:100%;transition:background 0.2s;}
+  .field input:focus,.field textarea:focus{background:rgba(0,229,255,0.07);}
+  .field textarea{resize:vertical;min-height:90px;}
+  .field select{background:#1a1f2e;}
+  .btn{padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;letter-spacing:0.04em;border:none;transition:all 0.2s;}
+  .btn:hover{filter:brightness(1.2);transform:translateY(-1px);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;filter:none!important;}
+  .btn-primary{background:linear-gradient(135deg,#00e5ff,#0099cc);color:#000;}
+  .btn-ghost{background:rgba(0,229,255,0.08);color:#00e5ff;border:1px solid #00e5ff!important;}
+  .btn-danger{background:rgba(255,77,109,0.15);color:#ff4d6d;border:1px solid #ff4d6d!important;}
+  .btn-success{background:rgba(0,245,160,0.15);color:#00f5a0;border:1px solid #00f5a0!important;}
+  .btn-warn{background:rgba(255,209,102,0.15);color:#ffd166;border:1px solid #ffd166!important;}
+  .btn-pill{background:linear-gradient(135deg,#00e5ff,#0099cc);color:#000;border:none!important;border-radius:50px;padding:14px 52px;font-size:16px;font-weight:700;letter-spacing:0.1em;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;}
+  .tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.1);overflow-x:auto;}
+  .tab{padding:14px 22px;background:transparent;border:none;border-bottom:2px solid transparent;color:rgba(240,244,248,0.45);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .tab.active{background:rgba(0,229,255,0.08);border-bottom-color:#00e5ff;color:#00e5ff;}
+  #toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:rgba(0,229,255,0.12);backdrop-filter:blur(20px);border:1px solid #00e5ff;border-radius:12px;padding:14px 22px;color:#f0f4f8;font-size:14px;box-shadow:0 0 24px rgba(0,229,255,0.35);display:none;animation:toastIn 0.3s ease;align-items:center;gap:10px;}
+  #loading-overlay{position:fixed;inset:0;background:rgba(13,17,23,0.9);z-index:8888;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(8px);}
+  .spinner{width:42px;height:42px;border:3px solid rgba(0,229,255,0.2);border-top-color:#00e5ff;border-radius:50%;animation:spin 0.8s linear infinite;}
+  .flex{display:flex;}.flex-col{flex-direction:column;}.gap-8{gap:8px;}.gap-12{gap:12px;}.gap-16{gap:16px;}.gap-20{gap:20px;}.gap-28{gap:28px;}
+  .justify-between{justify-content:space-between;}.align-center{align-items:center;}.flex-wrap{flex-wrap:wrap;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .mt-10{margin-top:10px;}.mt-14{margin-top:14px;}.mt-16{margin-top:16px;}.mt-18{margin-top:18px;}
+  .p-22{padding:22px;}.p-24{padding:24px;}.p-28{padding:28px;}.w-full{width:100%;}
+  .font-raj{font-family:'Rajdhani',sans-serif;}
+  .hidden{display:none!important;}
+  @media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr;}.btn-pill{padding:12px 36px;}}
+</style>
+</head>
+<body>
+<div class="orb-red"></div>
+<div class="orb-green"></div>
+<div id="toast"><span id="toast-icon" style="color:#00e5ff">&#10003;</span><span id="toast-msg"></span></div>
+
+<div id="loading-overlay" style="display:none;">
+  <div class="spinner"></div>
+  <div id="loading-text" style="color:rgba(240,244,248,0.6);font-size:14px;letter-spacing:0.08em;">Please wait...</div>
+</div>
+
+<!-- SCREEN 1: Landing -->
+<div id="screen-landing" class="screen active" style="align-items:center;justify-content:center;padding:16px;flex-direction:column;">
+  <div class="glass" style="padding:80px 72px;text-align:center;max-width:520px;width:100%;">
+    <div style="font-size:11px;letter-spacing:0.3em;color:rgba(240,244,248,0.4);text-transform:uppercase;margin-bottom:14px;">Welcome to</div>
+    <h1 class="font-raj" style="font-size:clamp(38px,7vw,58px);font-weight:700;letter-spacing:0.12em;line-height:1.1;margin-bottom:12px;">
+      TASK<br>
+      <span style="background:linear-gradient(135deg,#00e5ff,#00f5a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">MANAGEMENT</span>
+    </h1>
+    <p style="color:rgba(240,244,248,0.45);font-size:14px;margin-bottom:52px;line-height:1.7;">Organize. Assign. Deliver.<br>A unified workspace for creators &amp; admins.</p>
+    <button class="btn btn-pill" onclick="goTo('login')">Enter &rarr;</button>
+  </div>
+</div>
+
+<!-- SCREEN 2: Login -->
+<div id="screen-login" class="screen" style="align-items:center;justify-content:center;padding:16px;flex-direction:column;">
+  <div class="glass" style="padding:52px 48px;width:100%;max-width:420px;">
+    <h2 class="font-raj" style="font-size:38px;font-weight:700;color:#00e5ff;letter-spacing:0.1em;margin-bottom:6px;text-align:center;">Login</h2>
+    <p style="color:rgba(240,244,248,0.45);text-align:center;font-size:13px;margin-bottom:36px;">Sign in to your workspace</p>
+    <div class="flex flex-col gap-20">
+      <div class="field"><label>User ID / Phone Number *</label><input type="text" id="login-uid" placeholder="Enter your ID" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="field">
+        <label>Password *</label>
+        <div style="position:relative;">
+          <input type="password" id="login-pass" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onkeydown="if(event.key==='Enter')doLogin()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-bottom:2px solid #00e5ff;border-radius:8px 8px 0 0;padding:10px 44px 10px 14px;color:#f0f4f8;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;outline:none;transition:background 0.2s;"/>
+          <button type="button" onclick="togglePassVis()" id="pass-eye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(240,244,248,0.4);font-size:15px;cursor:pointer;padding:4px;">&#128065;</button>
+        </div>
+        <div style="font-size:11px;color:rgba(240,244,248,0.3);margin-top:4px;">Click &#128065; to show / hide password</div>
+      </div>
+      <div id="login-err" style="color:#ff4d6d;font-size:13px;text-align:center;display:none;"></div>
+      <button class="btn btn-primary w-full" style="padding:13px;font-size:15px;" onclick="doLogin()" id="login-btn">Sign In &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3A: Admin -->
+<div id="screen-admin" class="screen" style="padding:24px 16px;justify-content:center;flex-direction:column;align-items:center;">
+  <div style="max-width:1000px;width:100%;">
+    <div class="glass" style="overflow:hidden;">
+      <div style="padding:22px 28px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;">
+        <h1 class="font-raj" style="font-size:28px;font-weight:700;color:#00e5ff;letter-spacing:0.12em;">ADMIN PANEL</h1>
+        <button class="btn btn-ghost" style="font-size:12px;padding:7px 16px;" onclick="logout()">Sign Out</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="adminTab('members',this)">&#128101; Members</button>
+        <button class="tab" onclick="adminTab('projects',this)">&#128640; Projects</button>
+        <button class="tab" onclick="adminTab('review',this)">&#128203; Review</button>
+        <button class="tab" onclick="adminTab('comms',this)">&#128172; Comms</button>
+      </div>
+      <div style="padding:28px;">
+        <!-- Members -->
+        <div id="atab-members" class="flex flex-col gap-28">
+          <div class="glass-card p-28">
+            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;margin-bottom:20px;">+ Add New Creator</h3>
+            <div class="grid-3">
+              <div class="field"><label>Full Name</label><input type="text" id="new-name" placeholder="Creator name"/></div>
+              <div class="field"><label>User ID</label><input type="text" id="new-uid" placeholder="Phone/ID"/></div>
+              <div class="field"><label>Password</label><input type="text" id="new-pass" placeholder="Password"/></div>
+            </div>
+            <button class="btn btn-primary mt-18" onclick="addCreator()">Create Account</button>
+          </div>
+          <div>
+            <h3 class="font-raj" style="font-size:18px;font-weight:600;color:#f0f4f8;letter-spacing:0.06em;margin-bottom:14px;">Active Creators</h3>
+            <div id="creators-list" class="flex flex-col gap-8"><div style="color:rgba(240,244,248,0.4);font-size:14px;">Loading...</div></div>
+          </div>
+        </div>
+        <!-- Projects -->
+        <div id="atab-projects" class="flex flex-col gap-28 hidden">
+          <div class="glass-card p-28">
+            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;margin-bottom:20px;">&#128640; Launch New Project</h3>
+            <div class="grid-2">
+              <div class="field"><label>Project Name *</label><input type="text" id="p-name" placeholder="e.g. Brand Identity Kit"/></div>
+              <div class="field"><label>Project Niche</label><input type="text" id="p-niche" placeholder="e.g. Design, Marketing"/></div>
+              <div class="field"><label>Raise Date</label><input type="date" id="p-raise"/></div>
+              <div class="field"><label>Delivery Deadline *</label><input type="date" id="p-deadline"/></div>
+              <div class="field"><label>Reference Link</label><input type="text" id="p-ref" placeholder="https://"/></div>
+              <div class="field"><label>Commission (&#8377;)</label><input type="number" id="p-comm" placeholder="5000"/></div>
+              <div class="field" style="grid-column:1/-1"><label>Assignee *</label>
+                <select id="p-assignee"><option value="">Select Creator</option></select>
+              </div>
+            </div>
+            <button class="btn btn-primary mt-18" onclick="launchProject()">Launch Project</button>
+          </div>
+          <div>
+            <h3 class="font-raj" style="font-size:18px;font-weight:600;color:#f0f4f8;margin-bottom:14px;">All Projects</h3>
+            <div id="all-projects-list" class="flex flex-col gap-10"><div style="color:rgba(240,244,248,0.4);font-size:14px;">Loading...</div></div>
+          </div>
+        </div>
+        <!-- Review -->
+        <div id="atab-review" class="flex flex-col gap-28 hidden">
+          <div>
+            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;margin-bottom:16px;">Awaiting Review</h3>
+            <div id="review-list" class="flex flex-col gap-12"><div style="color:rgba(240,244,248,0.4);font-size:14px;">Loading...</div></div>
+          </div>
+          <div>
+            <h3 class="font-raj" style="font-size:16px;font-weight:600;color:#f0f4f8;margin-bottom:12px;">Reviewed Projects</h3>
+            <div id="reviewed-list" class="flex flex-col gap-8"></div>
+          </div>
+        </div>
+        <!-- Comms -->
+        <div id="atab-comms" class="flex flex-col gap-28 hidden">
+          <div class="glass-card p-28">
+            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;margin-bottom:18px;">&#128226; Broadcast Message</h3>
+            <div class="field"><label>Message to all creators</label><textarea id="bcast-msg" placeholder="Type your announcement..."></textarea></div>
+            <button class="btn btn-primary mt-14" onclick="broadcastMsg()">Send Broadcast</button>
+          </div>
+          <div>
+            <h3 class="font-raj" style="font-size:16px;font-weight:600;color:#f0f4f8;margin-bottom:12px;">Sent Messages</h3>
+            <div id="messages-list" class="flex flex-col gap-8"></div>
+          </div>
+          <div>
+            <h3 class="font-raj" style="font-size:16px;font-weight:600;color:#f0f4f8;margin-bottom:12px;">Creator Reports</h3>
+            <div id="reports-list" class="flex flex-col gap-8"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3B: Creator -->
+<div id="screen-creator" class="screen" style="padding:24px 16px;justify-content:center;flex-direction:column;align-items:center;">
+  <div style="max-width:860px;width:100%;">
+    <div class="glass" style="overflow:hidden;">
+      <div style="padding:22px 28px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;">
+        <div class="flex align-center gap-16">
+          <div style="position:relative;cursor:pointer;" onclick="document.getElementById('avatar-input').click()">
+            <div id="creator-avatar-ring" style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #00e5ff;box-shadow:0 0 24px rgba(0,229,255,0.35);background:linear-gradient(135deg,#00e5ff,#00f5a0);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#000;">
+              <span id="creator-avatar-initial"></span>
+              <img id="creator-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover;" alt=""/>
+            </div>
+            <div style="position:absolute;bottom:0;right:0;width:16px;height:16px;border-radius:50%;background:#00e5ff;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;">&#9998;</div>
+          </div>
+          <input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="updateAvatar(event)"/>
+          <div>
+            <h1 class="font-raj" style="font-size:22px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;">PROJECTS</h1>
+            <div id="creator-name-display" style="color:rgba(240,244,248,0.45);font-size:12px;"></div>
+          </div>
+        </div>
+        <button class="btn btn-ghost" style="font-size:12px;padding:7px 16px;" onclick="logout()">Sign Out</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="creatorTab('projects',this)">&#128193; My Projects</button>
+        <button class="tab" onclick="creatorTab('inbox',this)">&#128236; Inbox</button>
+        <button class="tab" onclick="creatorTab('report',this)">&#128681; Report</button>
+      </div>
+      <div style="padding:28px;">
+        <div id="ctab-projects"><div id="creator-projects-list" class="flex flex-col gap-16"><div style="color:rgba(240,244,248,0.4);font-size:14px;">Loading...</div></div></div>
+        <div id="ctab-inbox" class="hidden flex flex-col gap-12">
+          <h3 class="font-raj" style="font-size:18px;font-weight:700;color:#00e5ff;margin-bottom:6px;">&#128236; Admin Messages</h3>
+          <div id="creator-inbox-list" class="flex flex-col gap-8"></div>
+        </div>
+        <div id="ctab-report" class="hidden">
+          <h3 class="font-raj" style="font-size:18px;font-weight:700;color:#00e5ff;margin-bottom:18px;">&#128681; Send Report to Admin</h3>
+          <div class="glass-card p-24">
+            <div class="field"><label>Your message or issue</label><textarea id="report-text" placeholder="Describe your issue..." style="min-height:120px;"></textarea></div>
+            <button class="btn btn-primary mt-16" onclick="sendReport()">Send Report</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="position:relative;z-index:2;text-align:center;padding:36px 16px 32px;margin-top:auto;">
+  <div style="display:inline-block;padding:18px 36px;border-radius:60px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(12px);">
+    <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:rgba(240,244,248,0.75);letter-spacing:0.06em;margin-bottom:7px;">
+      Web Designed and Developed by &mdash;
+      <span style="background:linear-gradient(135deg,#00e5ff,#00f5a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;font-size:15px;">Subhadip Mandal</span>
+    </p>
+    <p style="font-size:14px;color:rgba(240,244,248,0.65);letter-spacing:0.06em;display:flex;align-items:center;justify-content:center;gap:6px;">
+      Made with <span class="heart-beat">&#10084;&#65039;</span> in <span style="color:#fff;font-weight:600;">India</span>
+      <span class="fog-wrap"><span class="fog">&#127787;&#65039;</span><span class="fog fog2">&#127787;&#65039;</span><span class="fog fog3">&#127787;&#65039;</span></span>
+    </p>
+  </div>
+</div>
+
+<style>
+  @keyframes heartbeat{0%,100%{transform:scale(1);}10%{transform:scale(1.45);}20%{transform:scale(1.05);}35%{transform:scale(1.3);}50%{transform:scale(1);}}
+  @keyframes fogDrift{0%{opacity:0;transform:translateX(-8px) translateY(2px);}45%{opacity:0.7;}100%{opacity:0;transform:translateX(18px) translateY(-4px);}}
+  @keyframes fogDrift2{0%{opacity:0;transform:translateX(6px);}50%{opacity:0.5;}100%{opacity:0;transform:translateX(-14px);}}
+  @keyframes fogDrift3{0%{opacity:0;transform:translateX(0px) translateY(4px);}40%{opacity:0.4;}100%{opacity:0;transform:translateX(10px) translateY(-6px);}}
+  .heart-beat{display:inline-block;font-size:18px;animation:heartbeat 1.6s ease-in-out infinite;filter:drop-shadow(0 0 8px rgba(255,50,50,1)) drop-shadow(0 0 18px rgba(255,80,80,0.8));}
+  .fog-wrap{display:inline-flex;align-items:center;margin-left:2px;}
+  .fog{display:inline-block;font-size:17px;animation:fogDrift 3.2s ease-in-out infinite;opacity:0;}
+  .fog2{display:inline-block;font-size:14px;animation:fogDrift2 3.8s ease-in-out 1s infinite;opacity:0;margin-left:-4px;}
+  .fog3{display:inline-block;font-size:12px;animation:fogDrift3 4.4s ease-in-out 2s infinite;opacity:0;margin-left:-6px;}
+</style>
+
+<script>
+// ── Supabase Config ──────────────────────────────────────────────
+const SUPA_URL = 'https://uufxtqujtcsxnjojaabd.supabase.co';
+const SUPA_KEY = 'sb_publishable_zrQn1Dx5kF_95QdhSgOIeQ_OmeJ_0LG';
+
+// Simple REST API wrapper for Supabase
+const sb = {
+  async get(table, query=''){
+    const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${query}&order=created_at.desc`, {
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'}
+    });
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async insert(table, data){
+    const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, {
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body: JSON.stringify(data)
+    });
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async update(table, id, data){
+    const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async delete(table, id){
+    const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method:'DELETE',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    if(!r.ok) throw new Error(await r.text());
+  }
+};
+
+// ── State ────────────────────────────────────────────────────────
+let currentUser = null;
+let currentRole = null;
+let pollInterval = null;
+
+// ── Helpers ──────────────────────────────────────────────────────
+const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+const isPast  = d => d && new Date(d) < new Date();
+const esc     = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function statusBadge(s){
+  const m={pending:{l:'Pending',c:'#ffd166'},completed:{l:'Completed',c:'#00f5a0'},notcompleted:{l:'Not Completed',c:'#ff4d6d'},approved:{l:'Approved',c:'#00e5ff'},rejected:{l:'Rejected',c:'#ff4d6d'}};
+  const v=m[s]||m.pending;
+  return `<span class="badge" style="background:${v.c}22;color:${v.c};border:1px solid ${v.c}44;">${v.l}</span>`;
+}
+function mkBadge(t,c='#00e5ff'){
+  return `<span class="badge" style="background:${c}22;color:${c};border:1px solid ${c}44;">${esc(t)}</span>`;
+}
+
+let toastT;
+function toast(msg, err=false){
+  const el=document.getElementById('toast');
+  el.style.borderColor=err?'#ff4d6d':'#00e5ff';
+  el.style.background=err?'rgba(255,77,109,0.12)':'rgba(0,229,255,0.12)';
+  document.getElementById('toast-icon').style.color=err?'#ff4d6d':'#00e5ff';
+  document.getElementById('toast-icon').textContent=err?'✕':'✓';
+  document.getElementById('toast-msg').textContent=msg;
+  el.style.display='flex';
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>el.style.display='none',3500);
+}
+
+function showLoad(t='Please wait...'){
+  document.getElementById('loading-text').textContent=t;
+  document.getElementById('loading-overlay').style.display='flex';
+}
+function hideLoad(){ document.getElementById('loading-overlay').style.display='none'; }
+
+// ── Nav ───────────────────────────────────────────────────────────
+function goTo(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+}
+
+function logout(){
+  if(pollInterval) clearInterval(pollInterval);
+  pollInterval=null;
+  currentUser=null; currentRole=null;
+  goTo('landing');
+}
+
+function togglePassVis(){
+  const i=document.getElementById('login-pass'),e=document.getElementById('pass-eye');
+  if(i.type==='password'){i.type='text';e.style.color='#00e5ff';}
+  else{i.type='password';e.style.color='rgba(240,244,248,0.4)';}
+}
+
+// ── Login ─────────────────────────────────────────────────────────
+async function doLogin(){
+  const uid=document.getElementById('login-uid').value.trim();
+  const pass=document.getElementById('login-pass').value.trim();
+  const errEl=document.getElementById('login-err');
+  const btn=document.getElementById('login-btn');
+  errEl.style.display='none'; btn.textContent='Signing in...'; btn.disabled=true;
+  try{
+    if(uid==='8101347299' && pass==='Subhadip@2008'){
+      currentRole='admin'; goTo('admin'); startAdminPolling();
+      btn.textContent='Sign In →'; btn.disabled=false; return;
+    }
+    const creators = await sb.get('creators');
+    const found = creators.find(c=>String(c.userid||c.userId||'').trim()===uid);
+    if(!found){ errEl.textContent='Account not found.'; errEl.style.display='block'; btn.textContent='Sign In →'; btn.disabled=false; return; }
+    if(String(found.password||'').trim()!==pass){ errEl.textContent='Wrong password.'; errEl.style.display='block'; btn.textContent='Sign In →'; btn.disabled=false; return; }
+    if(found.blocked){ errEl.textContent='Your account is blocked. Contact admin.'; errEl.style.display='block'; btn.textContent='Sign In →'; btn.disabled=false; return; }
+    currentRole='creator'; currentUser=found;
+    goTo('creator'); startCreatorView();
+  }catch(e){
+    errEl.textContent='Connection error: '+e.message;
+    errEl.style.display='block';
+  }
+  btn.textContent='Sign In →'; btn.disabled=false;
+}
+
+// ══ ADMIN POLLING (refresh every 8 seconds) ══════════════════════
+function startAdminPolling(){
+  loadAdminData();
+  pollInterval = setInterval(loadAdminData, 8000);
+}
+
+async function loadAdminData(){
+  try{
+    const [creators, projects, messages, reports] = await Promise.all([
+      sb.get('creators'),
+      sb.get('projects'),
+      sb.get('messages'),
+      sb.get('reports')
+    ]);
+    renderCreators(creators);
+    updateAssigneeDropdown(creators);
+    renderAllProjects(projects);
+    renderReview(projects);
+    renderAdminMsgs(messages);
+    renderAdminReports(reports);
+  }catch(e){ console.warn('Poll error:',e.message); }
+}
+
+function adminTab(name,btn){
+  document.querySelectorAll('#screen-admin .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[id^="atab-"]').forEach(t=>t.classList.add('hidden'));
+  document.getElementById('atab-'+name).classList.remove('hidden');
+}
+
+// ── Render: Creators ─────────────────────────────────────────────
+function renderCreators(list){
+  const el=document.getElementById('creators-list'); if(!el)return;
+  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No creators yet.</p>':list.map(c=>`
+    <div class="glass-card" style="padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00e5ff,#00f5a0);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#000;flex-shrink:0;">${esc((c.name||'?').charAt(0))}</div>
+        <div>
+          <div style="color:#f0f4f8;font-weight:600;font-size:14px;">${esc(c.name)}</div>
+          <div style="color:rgba(240,244,248,0.45);font-size:12px;">ID: ${esc(c.userid||c.userId)}</div>
+        </div>
+        ${c.blocked?`<span class="badge" style="background:#ff4d6d22;color:#ff4d6d;border:1px solid #ff4d6d44;">Blocked</span>`:''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn ${c.blocked?'btn-success':'btn-warn'}" style="padding:7px 16px;font-size:12px;" onclick="toggleBlock('${c.id}',${!!c.blocked})">${c.blocked?'Unblock':'Block'}</button>
+        <button class="btn btn-danger" style="padding:7px 16px;font-size:12px;" onclick="deleteCreator('${c.id}')">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+function updateAssigneeDropdown(list){
+  const sel=document.getElementById('p-assignee'); if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Select Creator</option>'+list.filter(c=>!c.blocked).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  if(cur) sel.value=cur;
+}
+
+async function addCreator(){
+  const nameEl=document.getElementById('new-name');
+  const uidEl=document.getElementById('new-uid');
+  const passEl=document.getElementById('new-pass');
+  const name=nameEl.value.trim(), userId=uidEl.value.trim(), password=passEl.value.trim();
+  if(!name||!userId||!password){toast('Fill all fields!',true);return;}
+  nameEl.value=''; uidEl.value=''; passEl.value='';
+  try{
+    await sb.insert('creators',{name, userid:userId, password, blocked:false, avatar:null});
+    toast('Creator added! ✓');
+    loadAdminData();
+  }catch(e){ nameEl.value=name; uidEl.value=userId; passEl.value=password; toast('Error: '+e.message,true); }
+}
+
+async function toggleBlock(id, blocked){
+  try{ await sb.update('creators',id,{blocked:!blocked}); toast(blocked?'Unblocked.':'Blocked.'); loadAdminData(); }
+  catch(e){ toast('Error: '+e.message,true); }
+}
+
+async function deleteCreator(id){
+  try{ await sb.delete('creators',id); toast('Creator removed.'); loadAdminData(); }
+  catch(e){ toast('Error: '+e.message,true); }
+}
+
+// ── Render: All Projects ─────────────────────────────────────────
+function renderAllProjects(list){
+  const el=document.getElementById('all-projects-list'); if(!el)return;
+  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No projects yet.</p>':list.map(p=>`
+    <div class="glass-card" style="padding:20px 24px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div>
+          <div style="color:#f0f4f8;font-weight:700;font-size:15px;margin-bottom:8px;">${esc(p.name)}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <span style="color:rgba(240,244,248,0.45);font-size:12px;">&#128100; ${esc(p.assigneename||'—')}</span>
+            ${p.niche?mkBadge(p.niche):''}
+            ${p.commission?mkBadge('₹'+Number(p.commission).toLocaleString(),'#00f5a0'):''}
+          </div>
+        </div>
+        ${statusBadge(p.status)}
+      </div>
+      <div class="grid-2" style="margin-bottom:12px;">
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:9px 13px;"><div style="color:rgba(240,244,248,0.45);font-size:11px;margin-bottom:3px;">RAISE DATE</div><div style="color:#f0f4f8;font-size:13px;font-weight:600;">${fmtDate(p.raisedate)||'—'}</div></div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:9px 13px;"><div style="color:rgba(240,244,248,0.45);font-size:11px;margin-bottom:3px;">DEADLINE</div><div style="color:${isPast(p.deadline)&&p.status==='pending'?'#ff4d6d':'#f0f4f8'};font-size:13px;font-weight:600;">${fmtDate(p.deadline)}</div></div>
+      </div>
+      ${p.reflink?`<div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);border-radius:8px;padding:9px 13px;margin-bottom:10px;"><span style="color:rgba(240,244,248,0.45);font-size:11px;">&#128279; REF &nbsp;</span><a href="${esc(p.reflink)}" target="_blank" style="color:#00e5ff;font-size:13px;word-break:break-all;">${esc(p.reflink)}</a></div>`:''}
+      ${p.worklink?`<div style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:9px 13px;margin-bottom:10px;"><span style="color:#00f5a0;font-size:11px;font-weight:600;">&#9989; WORK LINK &nbsp;</span><a href="${esc(p.worklink)}" target="_blank" style="color:#00f5a0;font-size:13px;word-break:break-all;">${esc(p.worklink)}</a></div>`:''}
+      ${p.failurereason?`<div style="background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);border-radius:8px;padding:9px 13px;"><span style="color:#ff4d6d;font-size:11px;font-weight:600;">FAILURE: </span><span style="color:rgba(240,244,248,0.6);font-size:13px;">${esc(p.failurereason)}</span></div>`:''}
+    </div>`).join('');
+}
+
+async function launchProject(){
+  const name=document.getElementById('p-name').value.trim();
+  const niche=document.getElementById('p-niche').value.trim();
+  const raisedate=document.getElementById('p-raise').value;
+  const deadline=document.getElementById('p-deadline').value;
+  const reflink=document.getElementById('p-ref').value.trim();
+  const commission=Number(document.getElementById('p-comm').value)||0;
+  const sel=document.getElementById('p-assignee');
+  const assigneeid=sel.value;
+  const assigneename=sel.selectedOptions[0]?.text||'';
+  if(!name||!deadline||!assigneeid){toast('Fill required fields!',true);return;}
+  try{
+    await sb.insert('projects',{name,niche,deadline,raisedate,reflink,commission,assigneeid,assigneename,status:'pending',failurereason:null,worklink:null,submittedat:null});
+    ['p-name','p-niche','p-raise','p-deadline','p-ref','p-comm'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('p-assignee').value='';
+    toast('Project launched! 🚀');
+    loadAdminData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+
+// ── Render: Review ────────────────────────────────────────────────
+function renderReview(list){
+  const reviewable=list.filter(p=>p.status==='completed'||p.status==='notcompleted');
+  const reviewed=list.filter(p=>p.status==='approved'||p.status==='rejected');
+  const rEl=document.getElementById('review-list');
+  if(rEl) rEl.innerHTML=reviewable.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No submissions pending.</p>':reviewable.map(p=>`
+    <div class="glass-card" style="padding:22px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div><div style="color:#f0f4f8;font-weight:700;font-size:15px;">${esc(p.name)}</div><div style="color:rgba(240,244,248,0.45);font-size:12px;margin-top:4px;">By ${esc(p.assigneename||'—')} &middot; ${fmtDate(p.submittedat)}</div></div>
+        ${statusBadge(p.status)}
+      </div>
+      ${p.worklink?`<div style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;"><span style="color:#00f5a0;font-size:12px;font-weight:600;">&#9989; Work Link: </span><a href="${esc(p.worklink)}" target="_blank" style="color:#00f5a0;font-size:13px;word-break:break-all;">${esc(p.worklink)}</a></div>`:''}
+      ${p.failurereason?`<div style="background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;"><span style="color:#ff4d6d;font-size:12px;font-weight:600;">Failure: </span><span style="color:rgba(240,244,248,0.5);font-size:13px;">${esc(p.failurereason)}</span></div>`:''}
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-success" onclick="approveProject('${p.id}')">&#10003; Approve</button>
+        <button class="btn btn-danger" onclick="rejectProject('${p.id}')">&#10005; Reject</button>
+      </div>
+    </div>`).join('');
+  const rvEl=document.getElementById('reviewed-list');
+  if(rvEl) rvEl.innerHTML=reviewed.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">None yet.</p>':reviewed.map(p=>`
+    <div class="glass-card" style="padding:16px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div><div style="color:#f0f4f8;font-size:14px;font-weight:600;">${esc(p.name)}</div><div style="color:rgba(240,244,248,0.45);font-size:12px;">${esc(p.assigneename||'—')}</div></div>
+      ${statusBadge(p.status)}
+    </div>`).join('');
+}
+
+async function approveProject(id){ try{ await sb.update('projects',id,{status:'approved'}); toast('Approved! ✓'); loadAdminData(); }catch(e){toast('Error: '+e.message,true);} }
+async function rejectProject(id){ try{ await sb.update('projects',id,{status:'rejected'}); toast('Rejected.'); loadAdminData(); }catch(e){toast('Error: '+e.message,true);} }
+
+// ── Render: Comms ────────────────────────────────────────────────
+function renderAdminMsgs(list){
+  const el=document.getElementById('messages-list'); if(!el)return;
+  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No messages sent.</p>':list.map(m=>`
+    <div class="glass-card" style="padding:16px 22px;">
+      <div style="color:#f0f4f8;font-size:14px;line-height:1.6;">${esc(m.text)}</div>
+      <div style="color:rgba(240,244,248,0.45);font-size:11px;margin-top:8px;">${m.sentat?new Date(m.sentat).toLocaleString():''}</div>
+    </div>`).join('');
+}
+
+function renderAdminReports(list){
+  const el=document.getElementById('reports-list'); if(!el)return;
+  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No reports yet.</p>':list.map(r=>`
+    <div class="glass-card" style="padding:16px 22px;">
+      <div style="color:#00e5ff;font-size:12px;margin-bottom:4px;">From: ${esc(r.creatorname||'Unknown')}</div>
+      <div style="color:#f0f4f8;font-size:14px;">${esc(r.text)}</div>
+      <div style="color:rgba(240,244,248,0.45);font-size:11px;margin-top:6px;">${r.sentat?new Date(r.sentat).toLocaleString():''}</div>
+    </div>`).join('');
+}
+
+async function broadcastMsg(){
+  const msg=document.getElementById('bcast-msg').value.trim(); if(!msg)return;
+  try{ await sb.insert('messages',{text:msg}); document.getElementById('bcast-msg').value=''; toast('Broadcast sent!'); loadAdminData(); }
+  catch(e){toast('Error: '+e.message,true);}
+}
+
+// ══ CREATOR ══════════════════════════════════════════════════════
+function startCreatorView(){
+  document.getElementById('creator-name-display').textContent=currentUser.name;
+  document.getElementById('creator-avatar-initial').textContent=(currentUser.name||'?').charAt(0);
+  if(currentUser.avatar){
+    document.getElementById('creator-avatar-img').src=currentUser.avatar;
+    document.getElementById('creator-avatar-img').style.display='block';
+    document.getElementById('creator-avatar-initial').style.display='none';
+  }
+  loadCreatorData();
+  pollInterval=setInterval(loadCreatorData,8000);
+}
+
+async function loadCreatorData(){
+  try{
+    const [projects, messages] = await Promise.all([
+      sb.get('projects',`assigneeid=eq.${currentUser.id}`),
+      sb.get('messages')
+    ]);
+    renderMyProjects(projects);
+    renderInbox(messages);
+  }catch(e){console.warn('Creator poll:',e.message);}
+}
+
+function creatorTab(name,btn){
+  document.querySelectorAll('#screen-creator .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[id^="ctab-"]').forEach(t=>t.classList.add('hidden'));
+  document.getElementById('ctab-'+name).classList.remove('hidden');
+}
+
+function updateAvatar(e){
+  const f=e.target.files[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const url=ev.target.result;
+    currentUser.avatar=url;
+    const img=document.getElementById('creator-avatar-img'),init=document.getElementById('creator-avatar-initial');
+    img.src=url; img.style.display='block'; init.style.display='none';
+    sb.update('creators',currentUser.id,{avatar:url}).catch(()=>{});
+    toast('Avatar updated!');
+  };
+  reader.readAsDataURL(f);
+}
+
+function renderMyProjects(list){
+  const el=document.getElementById('creator-projects-list'); if(!el)return;
+  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No projects assigned yet.</p>':list.map(p=>{
+    const overdue=isPast(p.deadline)&&p.status==='pending';
+    const canAct=p.status==='pending';
+    return `
+    <div class="glass-card" style="padding:22px;border-left:3px solid ${overdue?'#ff4d6d':'#00e5ff'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+        <div>
+          <div style="color:#f0f4f8;font-weight:700;font-size:16px;margin-bottom:8px;">${esc(p.name)}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            ${p.niche?mkBadge(p.niche):''}
+            ${mkBadge('₹'+Number(p.commission||0).toLocaleString(),'#00f5a0')}
+            ${overdue?mkBadge('Overdue','#ff4d6d'):''}
+          </div>
+        </div>
+        ${statusBadge(p.status)}
+      </div>
+      <div class="grid-2" style="margin-bottom:14px;">
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px 14px;"><div style="color:rgba(240,244,248,0.45);font-size:11px;margin-bottom:3px;">DEADLINE</div><div style="color:${overdue?'#ff4d6d':'#f0f4f8'};font-size:14px;font-weight:600;">${fmtDate(p.deadline)}</div></div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px 14px;"><div style="color:rgba(240,244,248,0.45);font-size:11px;margin-bottom:3px;">RAISE DATE</div><div style="color:#f0f4f8;font-size:14px;font-weight:600;">${fmtDate(p.raisedate)}</div></div>
+      </div>
+      ${p.reflink?`<div style="margin-bottom:14px;"><span style="color:rgba(240,244,248,0.45);font-size:12px;">Reference: </span><a href="${esc(p.reflink)}" target="_blank" style="color:#00e5ff;font-size:12px;">${esc(p.reflink)}</a></div>`:''}
+      ${p.worklink?`<div style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:10px 14px;margin-bottom:10px;"><span style="color:#00f5a0;font-size:12px;font-weight:600;">&#9989; Submitted: </span><a href="${esc(p.worklink)}" target="_blank" style="color:#00f5a0;font-size:13px;">${esc(p.worklink)}</a></div>`:''}
+      ${canAct?`
+        <div id="cbtns-${p.id}" style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-success" onclick="toggleComplete('${p.id}')">&#10003; Complete</button>
+          <button class="btn btn-danger" onclick="toggleFail('${p.id}')">&#10005; Not Completed</button>
+        </div>
+        <div id="complete-${p.id}" class="hidden" style="margin-top:14px;">
+          <div class="field">
+            <label>Work Submission Link *</label>
+            <input type="text" id="wlink-${p.id}" placeholder="Paste your Google Drive / Behance / delivery link here"/>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn btn-success" onclick="markComplete('${p.id}')">Submit &amp; Complete &#10003;</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('complete-${p.id}').classList.add('hidden')">Cancel</button>
+          </div>
+        </div>
+        <div id="fail-${p.id}" class="hidden" style="margin-top:14px;">
+          <div class="field"><label>Reason for not completing *</label><textarea id="freason-${p.id}" placeholder="Explain why this project could not be completed..."></textarea></div>
+          <button class="btn btn-danger mt-10" onclick="submitFail('${p.id}')">Submit Reason</button>
+        </div>
+      `:''}
+    </div>`;
+  }).join('');
+}
+
+function toggleComplete(id){ document.getElementById('complete-'+id).classList.toggle('hidden'); }
+function toggleFail(id){ document.getElementById('fail-'+id).classList.toggle('hidden'); }
+
+async function markComplete(id){
+  const link=(document.getElementById('wlink-'+id)?.value||'').trim();
+  if(!link){toast('Please paste your work link!',true);return;}
+  try{
+    await sb.update('projects',id,{status:'completed',worklink:link,submittedat:new Date().toISOString()});
+    toast('Project submitted! ✓');
+    loadCreatorData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+
+async function submitFail(id){
+  const reason=(document.getElementById('freason-'+id)?.value||'').trim();
+  if(!reason){toast('Please enter a reason!',true);return;}
+  try{
+    await sb.update('projects',id,{status:'notcompleted',failurereason:reason,submittedat:new Date().toISOString()});
+    toast('Status updated.');
+    loadCreatorData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+
+function renderInbox(list){
+  const el=document.getElementById('creator-inbox-list'); if(!el)return;
+  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No messages yet.</p>':list.map(m=>`
+    <div class="glass-card" style="padding:16px 20px;border-left:3px solid #00e5ff;">
+      <div style="color:#f0f4f8;font-size:14px;line-height:1.6;">${esc(m.text)}</div>
+      <div style="color:rgba(240,244,248,0.45);font-size:11px;margin-top:8px;">${m.sentat?new Date(m.sentat).toLocaleString():''}</div>
+    </div>`).join('');
+}
+
+async function sendReport(){
+  const text=document.getElementById('report-text').value.trim(); if(!text)return;
+  try{
+    await sb.insert('reports',{creatorid:currentUser.id,creatorname:currentUser.name,text});
+    document.getElementById('report-text').value='';
+    toast('Report sent to admin!');
+  }catch(e){toast('Error: '+e.message,true);}
+}
+</script>
+</body>
+</html>
