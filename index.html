@@ -263,10 +263,16 @@ const SUPA_KEY = 'sb_publishable_zrQn1Dx5kF_95QdhSgOIeQ_OmeJ_0LG';
 // Simple REST API wrapper for Supabase
 const sb = {
   async get(table, query='', limit=100){
-    const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${query}&order=created_at.desc&limit=${limit}`, {
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Range-Unit':'items','Prefer':'count=none'}
+    // Try ordering by id (always exists). If query is empty, don't add leading &
+    const q = query ? `${query}&order=id.desc&limit=${limit}` : `order=id.desc&limit=${limit}`;
+    const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${q}`, {
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'}
     });
-    if(!r.ok) throw new Error(await r.text());
+    if(!r.ok){
+      const errText = await r.text();
+      console.error(`[sb.get] ${table} failed:`, errText);
+      throw new Error(errText);
+    }
     return r.json();
   },
   async insert(table, data){
@@ -408,7 +414,10 @@ async function loadAdminData(){
     renderReview(projects);
     renderAdminMsgs(messages);
     renderAdminReports(reports);
-  }catch(e){ console.warn('Poll error:',e.message); }
+  }catch(e){
+    console.error('loadAdminData error:',e.message);
+    toast('Failed to load data: ' + e.message, true);
+  }
 }
 
 function adminTab(name,btn){
@@ -602,12 +611,15 @@ function startCreatorView(){
 async function loadCreatorData(){
   try{
     const [projects, messages] = await Promise.all([
-      sb.get('projects',`assigneeid=eq.${currentUser.id}`),
-      sb.get('messages')
+      sb.get('projects',`assigneeid=eq.${currentUser.id}`,100),
+      sb.get('messages','',30)
     ]);
     renderMyProjects(projects);
     renderInbox(messages);
-  }catch(e){console.warn('Creator poll:',e.message);}
+  }catch(e){
+    console.error('loadCreatorData error:',e.message);
+    toast('Failed to load data: ' + e.message, true);
+  }
 }
 
 function creatorTab(name,btn){
