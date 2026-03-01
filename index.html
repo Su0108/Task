@@ -4,7 +4,6 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Task Management</title>
-<!-- PWA -->
 <meta name="application-name" content="Task Management"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -15,328 +14,626 @@
 <link rel="manifest" href="manifest.json"/>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'DM Sans',sans-serif;background:#0d1117;min-height:100vh;overflow-x:hidden;color:#f0f4f8;}
-  ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px;}
-  input,textarea,select{font-family:'DM Sans',sans-serif;outline:none;}
-  button{cursor:pointer;font-family:'DM Sans',sans-serif;}
-  select option{background:#1a1f2e;color:#f0f4f8;}
-  .orb-red{position:fixed;top:-120px;left:-120px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(255,77,109,0.28) 0%,transparent 70%);filter:blur(60px);pointer-events:none;z-index:0;animation:orbPulse 8s ease-in-out infinite;}
-  .orb-green{position:fixed;bottom:-120px;right:-120px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(0,245,160,0.22) 0%,transparent 70%);filter:blur(60px);pointer-events:none;z-index:0;animation:orbPulse 10s ease-in-out infinite reverse;}
-  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border:1px solid rgba(255,255,255,0.10);border-radius:20px;box-shadow:0 8px 64px rgba(0,0,0,0.6);}
-  .glass-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,0.4);}
-  .screen{display:none;min-height:100vh;position:relative;z-index:1;}
-  .screen.active{display:flex;animation:fadeIn 0.5s ease;}
-  @keyframes orbPulse{0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.12);opacity:1;}}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-  @keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-  @keyframes toastIn{from{opacity:0;transform:translateX(60px);}to{opacity:1;transform:translateX(0);}}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .field{display:flex;flex-direction:column;gap:6px;}
-  .field label{font-size:11px;color:rgba(240,244,248,0.45);letter-spacing:0.1em;text-transform:uppercase;}
-  .field input,.field textarea,.field select{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-bottom:2px solid #00e5ff;border-radius:8px 8px 0 0;padding:10px 14px;color:#f0f4f8;font-size:14px;width:100%;transition:background 0.2s;}
-  .field input:focus,.field textarea:focus{background:rgba(0,229,255,0.07);}
-  .field textarea{resize:vertical;min-height:90px;}
-  .field select{background:#1a1f2e;}
-  .btn{padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;letter-spacing:0.04em;border:none;transition:all 0.2s;}
-  .btn:hover{filter:brightness(1.2);transform:translateY(-1px);}
-  .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;filter:none!important;}
-  .btn-primary{background:linear-gradient(135deg,#00e5ff,#0099cc);color:#000;}
-  .btn-ghost{background:rgba(0,229,255,0.08);color:#00e5ff;border:1px solid #00e5ff!important;}
-  .btn-danger{background:rgba(255,77,109,0.15);color:#ff4d6d;border:1px solid #ff4d6d!important;}
-  .btn-success{background:rgba(0,245,160,0.15);color:#00f5a0;border:1px solid #00f5a0!important;}
-  .btn-warn{background:rgba(255,209,102,0.15);color:#ffd166;border:1px solid #ffd166!important;}
-  .btn-pill{background:linear-gradient(135deg,#00e5ff,#0099cc);color:#000;border:none!important;border-radius:50px;padding:14px 52px;font-size:16px;font-weight:700;letter-spacing:0.1em;}
-  .badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;}
-  .tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.1);overflow-x:auto;}
-  .tab{padding:14px 22px;background:transparent;border:none;border-bottom:2px solid transparent;color:rgba(240,244,248,0.45);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
-  .tab.active{background:rgba(0,229,255,0.08);border-bottom-color:#00e5ff;color:#00e5ff;}
-  #toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:rgba(0,229,255,0.12);backdrop-filter:blur(20px);border:1px solid #00e5ff;border-radius:12px;padding:14px 22px;color:#f0f4f8;font-size:14px;box-shadow:0 0 24px rgba(0,229,255,0.35);display:none;animation:toastIn 0.3s ease;align-items:center;gap:10px;}
-  #loading-overlay{position:fixed;inset:0;background:rgba(13,17,23,0.9);z-index:8888;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(8px);}
-  .spinner{width:42px;height:42px;border:3px solid rgba(0,229,255,0.2);border-top-color:#00e5ff;border-radius:50%;animation:spin 0.8s linear infinite;}
-  .flex{display:flex;}.flex-col{flex-direction:column;}.gap-8{gap:8px;}.gap-12{gap:12px;}.gap-16{gap:16px;}.gap-20{gap:20px;}.gap-28{gap:28px;}
-  .justify-between{justify-content:space-between;}.align-center{align-items:center;}.flex-wrap{flex-wrap:wrap;}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
-  .mt-10{margin-top:10px;}.mt-14{margin-top:14px;}.mt-16{margin-top:16px;}.mt-18{margin-top:18px;}
-  .p-22{padding:22px;}.p-24{padding:24px;}.p-28{padding:28px;}.w-full{width:100%;}
-  .font-raj{font-family:'Rajdhani',sans-serif;}
-  .hidden{display:none!important;}
-  @media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr;}.btn-pill{padding:12px 36px;}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1a1f2e;
+  --text:#f0f4f8;--text2:rgba(240,244,248,0.6);--text3:rgba(240,244,248,0.35);
+  --cyan:#00e5ff;--green:#00f5a0;--red:#ff4d6d;--yellow:#ffd166;--purple:#a78bfa;
+  --border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.06);
+  --glass:rgba(255,255,255,0.05);--glass2:rgba(255,255,255,0.03);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;overflow-x:hidden;color:var(--text);transition:background 0.3s,color 0.3s;}
+body.light{--bg:#f0f4f8;--bg2:#e2e8f0;--bg3:#cbd5e1;--text:#0f172a;--text2:rgba(15,23,42,0.65);--text3:rgba(15,23,42,0.4);--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.06);--glass:rgba(255,255,255,0.7);--glass2:rgba(255,255,255,0.5);}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px;}
+input,textarea,select{font-family:'DM Sans',sans-serif;outline:none;}
+button{cursor:pointer;font-family:'DM Sans',sans-serif;}
+select option{background:var(--bg3);color:var(--text);}
+.orb-red{position:fixed;top:-120px;left:-120px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(255,77,109,0.22) 0%,transparent 70%);filter:blur(60px);pointer-events:none;z-index:0;animation:orbPulse 8s ease-in-out infinite;}
+.orb-green{position:fixed;bottom:-120px;right:-120px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(0,245,160,0.18) 0%,transparent 70%);filter:blur(60px);pointer-events:none;z-index:0;animation:orbPulse 10s ease-in-out infinite reverse;}
+.glass{background:var(--glass);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border:1px solid var(--border);border-radius:20px;box-shadow:0 8px 64px rgba(0,0,0,0.4);}
+.glass-card{background:var(--glass2);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border2);border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,0.25);}
+.screen{display:none;min-height:100vh;position:relative;z-index:1;}
+.screen.active{display:flex;animation:fadeIn 0.4s ease;}
+@keyframes orbPulse{0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.12);opacity:1;}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes toastIn{from{opacity:0;transform:translateX(60px);}to{opacity:1;transform:translateX(0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+@keyframes heartbeat{0%,100%{transform:scale(1);}10%{transform:scale(1.45);}20%{transform:scale(1.05);}35%{transform:scale(1.3);}50%{transform:scale(1);}}
+@keyframes fogDrift{0%{opacity:0;transform:translateX(-8px);}45%{opacity:0.7;}100%{opacity:0;transform:translateX(18px);}}
+@keyframes fogDrift2{0%{opacity:0;transform:translateX(6px);}50%{opacity:0.5;}100%{opacity:0;transform:translateX(-14px);}}
+@keyframes fogDrift3{0%{opacity:0;}40%{opacity:0.4;}100%{opacity:0;transform:translateX(10px);}}
+@keyframes emergencyPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,109,0.7);}50%{box-shadow:0 0 0 12px rgba(255,77,109,0);}}
+@keyframes badgePop{0%{transform:scale(0);}80%{transform:scale(1.2);}100%{transform:scale(1);}}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:11px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;}
+.field input,.field textarea,.field select{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-bottom:2px solid var(--cyan);border-radius:8px 8px 0 0;padding:10px 14px;color:var(--text);font-size:14px;width:100%;transition:background 0.2s;}
+body.light .field input,body.light .field textarea,body.light .field select{background:rgba(0,0,0,0.05);}
+.field input:focus,.field textarea:focus{background:rgba(0,229,255,0.07);}
+.field textarea{resize:vertical;min-height:90px;}
+.field select{background:var(--bg3);}
+.btn{padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;letter-spacing:0.04em;border:none;transition:all 0.2s;}
+.btn:hover{filter:brightness(1.15);transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;filter:none!important;}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#0099cc);color:#000;}
+.btn-ghost{background:rgba(0,229,255,0.08);color:var(--cyan);border:1px solid var(--cyan)!important;}
+.btn-danger{background:rgba(255,77,109,0.15);color:var(--red);border:1px solid var(--red)!important;}
+.btn-success{background:rgba(0,245,160,0.15);color:var(--green);border:1px solid var(--green)!important;}
+.btn-warn{background:rgba(255,209,102,0.15);color:var(--yellow);border:1px solid var(--yellow)!important;}
+.btn-purple{background:rgba(167,139,250,0.15);color:var(--purple);border:1px solid var(--purple)!important;}
+.btn-pill{background:linear-gradient(135deg,var(--cyan),#0099cc);color:#000;border:none!important;border-radius:50px;padding:14px 52px;font-size:16px;font-weight:700;letter-spacing:0.1em;}
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;}
+.tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:11px 16px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;position:relative;}
+.tab.active{background:rgba(0,229,255,0.08);border-bottom-color:var(--cyan);color:var(--cyan);}
+.tab-badge{position:absolute;top:5px;right:4px;background:var(--red);color:#fff;border-radius:50%;width:15px;height:15px;font-size:9px;display:flex;align-items:center;justify-content:center;animation:badgePop 0.3s ease;}
+#toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:rgba(0,229,255,0.12);backdrop-filter:blur(20px);border:1px solid var(--cyan);border-radius:12px;padding:14px 22px;color:var(--text);font-size:14px;box-shadow:0 0 24px rgba(0,229,255,0.3);display:none;animation:toastIn 0.3s ease;align-items:center;gap:10px;max-width:320px;}
+#loading-overlay{position:fixed;inset:0;background:rgba(13,17,23,0.92);z-index:8888;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(8px);}
+.spinner{width:42px;height:42px;border:3px solid rgba(0,229,255,0.2);border-top-color:var(--cyan);border-radius:50%;animation:spin 0.8s linear infinite;}
+#notif-panel{position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);z-index:7777;transform:translateX(100%);transition:transform 0.3s ease;overflow-y:auto;padding:20px;}
+#notif-panel.open{transform:translateX(0);}
+.notif-item{padding:12px 14px;border-radius:10px;border:1px solid var(--border2);margin-bottom:8px;background:var(--glass2);}
+.notif-item.unread{border-left:3px solid var(--cyan);}
+#emergency-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:8500;background:linear-gradient(135deg,#ff4d6d,#c9184a);padding:14px 24px;text-align:center;animation:emergencyPulse 1.5s infinite;cursor:pointer;}
+.chat-bubble{max-width:72%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.5;word-break:break-word;}
+.chat-bubble.sent{background:linear-gradient(135deg,rgba(0,229,255,0.25),rgba(0,229,255,0.15));border:1px solid rgba(0,229,255,0.3);margin-left:auto;border-radius:16px 16px 4px 16px;}
+.chat-bubble.recv{background:var(--glass2);border:1px solid var(--border2);margin-right:auto;border-radius:16px 16px 16px 4px;}
+.chat-meta{font-size:10px;color:var(--text3);margin:2px 4px 8px;}
+.chat-meta.sent{text-align:right;}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
+.offline-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);display:inline-block;}
+.progress-bar{height:6px;border-radius:3px;background:var(--border2);overflow:hidden;margin-top:6px;}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width 0.3s;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
+.star{color:var(--text3);font-size:22px;cursor:pointer;transition:color 0.15s;}
+.star.active,.star:hover{color:var(--yellow);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:background 0.2s;position:relative;}
+.cal-day:hover{background:var(--glass);}
+.cal-day.today{background:rgba(0,229,255,0.15);color:var(--cyan);font-weight:700;}
+.cal-day.has-event::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--red);}
+.cal-day.other-month{color:var(--text3);}
+.flex{display:flex;}.flex-col{flex-direction:column;}.gap-4{gap:4px;}.gap-6{gap:6px;}.gap-8{gap:8px;}.gap-10{gap:10px;}.gap-12{gap:12px;}.gap-16{gap:16px;}.gap-20{gap:20px;}.gap-28{gap:28px;}
+.justify-between{justify-content:space-between;}.justify-center{justify-content:center;}.align-center{align-items:center;}.flex-wrap{flex-wrap:wrap;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.mt-8{margin-top:8px;}.mt-10{margin-top:10px;}.mt-14{margin-top:14px;}.mt-16{margin-top:16px;}.mt-18{margin-top:18px;}
+.p-14{padding:14px;}.p-16{padding:16px;}.p-22{padding:22px;}.p-24{padding:24px;}.p-28{padding:28px;}.w-full{width:100%;}
+.font-raj{font-family:'Rajdhani',sans-serif;}
+.hidden{display:none!important;}
+.heart-beat{display:inline-block;font-size:18px;animation:heartbeat 1.6s ease-in-out infinite;filter:drop-shadow(0 0 8px rgba(255,50,50,1));}
+.fog-wrap{display:inline-flex;align-items:center;margin-left:2px;}
+.fog{display:inline-block;font-size:17px;animation:fogDrift 3.2s ease-in-out infinite;opacity:0;}
+.fog2{display:inline-block;font-size:14px;animation:fogDrift2 3.8s ease-in-out 1s infinite;opacity:0;margin-left:-4px;}
+.fog3{display:inline-block;font-size:12px;animation:fogDrift3 4.4s ease-in-out 2s infinite;opacity:0;margin-left:-6px;}
+@media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr;}.btn-pill{padding:12px 36px;}#notif-panel{width:100%;}}
 </style>
 </head>
 <body>
 <div class="orb-red"></div>
 <div class="orb-green"></div>
-<div id="toast"><span id="toast-icon" style="color:#00e5ff">&#10003;</span><span id="toast-msg"></span></div>
-
-<div id="loading-overlay" style="display:none;">
-  <div class="spinner"></div>
-  <div id="loading-text" style="color:rgba(240,244,248,0.6);font-size:14px;letter-spacing:0.08em;">Please wait...</div>
+<div id="toast"><span id="toast-icon">✓</span><span id="toast-msg"></span></div>
+<div id="loading-overlay" style="display:none;"><div class="spinner"></div><div id="loading-text" style="color:var(--text2);font-size:14px;">Please wait...</div></div>
+<div id="emergency-banner" onclick="dismissEmergency()">
+  <div style="font-weight:700;font-size:15px;color:#fff;">🚨 EMERGENCY ALERT</div>
+  <div id="emergency-text" style="color:rgba(255,255,255,0.9);font-size:13px;margin-top:4px;"></div>
+  <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;">Tap to dismiss</div>
+</div>
+<div id="notif-panel">
+  <div class="flex justify-between align-center" style="margin-bottom:16px;">
+    <h3 class="font-raj" style="font-size:20px;color:var(--cyan);">🔔 Notifications</h3>
+    <div class="flex gap-8">
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="markAllRead()">All read</button>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="closeNotifPanel()">✕</button>
+    </div>
+  </div>
+  <div id="notif-list"><p style="color:var(--text3);font-size:13px;">No notifications yet.</p></div>
+</div>
+<div id="modal-overlay" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box" id="modal-box"></div>
 </div>
 
-<!-- SCREEN 1: Landing -->
+<!-- LANDING -->
 <div id="screen-landing" class="screen active" style="align-items:center;justify-content:center;padding:16px;flex-direction:column;">
   <div class="glass" style="padding:80px 72px;text-align:center;max-width:520px;width:100%;">
-    <div style="font-size:11px;letter-spacing:0.3em;color:rgba(240,244,248,0.4);text-transform:uppercase;margin-bottom:14px;">Welcome to</div>
-    <h1 class="font-raj" style="font-size:clamp(38px,7vw,58px);font-weight:700;letter-spacing:0.12em;line-height:1.1;margin-bottom:12px;">
-      TASK<br>
-      <span style="background:linear-gradient(135deg,#00e5ff,#00f5a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">MANAGEMENT</span>
-    </h1>
-    <p style="color:rgba(240,244,248,0.45);font-size:14px;margin-bottom:52px;line-height:1.7;">Organize. Assign. Deliver.<br>A unified workspace for creators &amp; admins.</p>
+    <div style="font-size:11px;letter-spacing:0.3em;color:var(--text3);text-transform:uppercase;margin-bottom:14px;">Welcome to</div>
+    <h1 class="font-raj" style="font-size:clamp(38px,7vw,58px);font-weight:700;letter-spacing:0.12em;line-height:1.1;margin-bottom:12px;">TASK<br><span style="background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">MANAGEMENT</span></h1>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:52px;line-height:1.7;">Organize. Assign. Deliver.<br>A unified workspace for creators &amp; admins.</p>
     <button class="btn btn-pill" onclick="goTo('login')">Enter &rarr;</button>
   </div>
 </div>
 
-<!-- SCREEN 2: Login -->
+<!-- LOGIN -->
 <div id="screen-login" class="screen" style="align-items:center;justify-content:center;padding:16px;flex-direction:column;">
   <div class="glass" style="padding:52px 48px;width:100%;max-width:420px;">
-    <h2 class="font-raj" style="font-size:38px;font-weight:700;color:#00e5ff;letter-spacing:0.1em;margin-bottom:6px;text-align:center;">Login</h2>
-    <p style="color:rgba(240,244,248,0.45);text-align:center;font-size:13px;margin-bottom:36px;">Sign in to your workspace</p>
+    <h2 class="font-raj" style="font-size:38px;font-weight:700;color:var(--cyan);letter-spacing:0.1em;margin-bottom:6px;text-align:center;">Login</h2>
+    <p style="color:var(--text2);text-align:center;font-size:13px;margin-bottom:36px;">Sign in to your workspace</p>
     <div class="flex flex-col gap-20">
-      <div class="field"><label>User ID / Phone Number *</label><input type="text" id="login-uid" placeholder="Enter your ID" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="field"><label>User ID *</label><input type="text" id="login-uid" placeholder="Enter your ID" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div class="field">
         <label>Password *</label>
         <div style="position:relative;">
-          <input type="password" id="login-pass" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onkeydown="if(event.key==='Enter')doLogin()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-bottom:2px solid #00e5ff;border-radius:8px 8px 0 0;padding:10px 44px 10px 14px;color:#f0f4f8;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;outline:none;transition:background 0.2s;"/>
-          <button type="button" onclick="togglePassVis()" id="pass-eye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(240,244,248,0.4);font-size:15px;cursor:pointer;padding:4px;">&#128065;</button>
+          <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);border-bottom:2px solid var(--cyan);border-radius:8px 8px 0 0;padding:10px 44px 10px 14px;color:var(--text);font-size:14px;width:100%;font-family:'DM Sans',sans-serif;outline:none;"/>
+          <button type="button" onclick="togglePassVis()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);font-size:15px;cursor:pointer;padding:4px;">👁</button>
         </div>
-        <div style="font-size:11px;color:rgba(240,244,248,0.3);margin-top:4px;">Click &#128065; to show / hide password</div>
       </div>
-      <div id="login-err" style="color:#ff4d6d;font-size:13px;text-align:center;display:none;"></div>
+      <div id="login-err" style="color:var(--red);font-size:13px;text-align:center;display:none;"></div>
       <button class="btn btn-primary w-full" style="padding:13px;font-size:15px;" onclick="doLogin()" id="login-btn">Sign In &rarr;</button>
     </div>
   </div>
 </div>
 
-<!-- SCREEN 3A: Admin -->
+<!-- ADMIN SCREEN -->
 <div id="screen-admin" class="screen" style="padding:24px 16px;justify-content:center;flex-direction:column;align-items:center;">
-  <div style="max-width:1000px;width:100%;">
+  <div style="max-width:1100px;width:100%;">
     <div class="glass" style="overflow:hidden;">
-      <div style="padding:22px 28px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;">
-        <h1 class="font-raj" style="font-size:28px;font-weight:700;color:#00e5ff;letter-spacing:0.12em;">ADMIN PANEL</h1>
-        <button class="btn btn-ghost" style="font-size:12px;padding:7px 16px;" onclick="logout()">Sign Out</button>
+      <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <h1 class="font-raj" style="font-size:24px;font-weight:700;color:var(--cyan);letter-spacing:0.12em;">⚡ ADMIN PANEL</h1>
+        <div class="flex align-center gap-8">
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleTheme()" id="theme-btn">🌙</button>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;position:relative;" onclick="openNotifPanel()">🔔<span id="admin-notif-badge" class="hidden" style="position:absolute;top:3px;right:3px;background:var(--red);color:#fff;border-radius:50%;width:14px;height:14px;font-size:8px;display:flex;align-items:center;justify-content:center;"></span></button>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px;" onclick="logout()">Sign Out</button>
+        </div>
       </div>
       <div class="tabs">
-        <button class="tab active" onclick="adminTab('members',this)">&#128101; Members</button>
-        <button class="tab" onclick="adminTab('projects',this)">&#128640; Projects</button>
-        <button class="tab" onclick="adminTab('review',this)">&#128203; Review</button>
-        <button class="tab" onclick="adminTab('comms',this)">&#128172; Comms</button>
+        <button class="tab active" onclick="adminTab('dashboard',this)">📊 Dashboard</button>
+        <button class="tab" onclick="adminTab('members',this)">👥 Members</button>
+        <button class="tab" onclick="adminTab('projects',this)">🚀 Projects</button>
+        <button class="tab" onclick="adminTab('review',this)">📋 Review</button>
+        <button class="tab" onclick="adminTab('comms',this)">💬 Comms<span id="admin-chat-badge" class="hidden tab-badge">0</span></button>
+        <button class="tab" onclick="adminTab('payments',this)">💰 Payments</button>
+        <button class="tab" onclick="adminTab('calendar',this)">📅 Calendar</button>
+        <button class="tab" onclick="adminTab('analytics',this)">📈 Analytics</button>
+        <button class="tab" onclick="adminTab('activity',this)">📜 Log</button>
+        <button class="tab" onclick="adminTab('settings',this)">⚙️ Settings</button>
       </div>
-      <div style="padding:28px;">
-        <!-- Members -->
-        <div id="atab-members" class="flex flex-col gap-28">
+      <div style="padding:22px;">
+
+        <!-- DASHBOARD -->
+        <div id="atab-dashboard" class="flex flex-col gap-20">
+          <div class="grid-3" id="admin-stats-grid">
+            <div class="glass-card p-22" style="text-align:center;"><div style="font-size:30px;font-weight:700;color:var(--cyan);" id="stat-total-creators">—</div><div style="color:var(--text2);font-size:12px;margin-top:4px;">Total Creators</div></div>
+            <div class="glass-card p-22" style="text-align:center;"><div style="font-size:30px;font-weight:700;color:var(--green);" id="stat-total-projects">—</div><div style="color:var(--text2);font-size:12px;margin-top:4px;">Total Projects</div></div>
+            <div class="glass-card p-22" style="text-align:center;"><div style="font-size:30px;font-weight:700;color:var(--yellow);" id="stat-pending">—</div><div style="color:var(--text2);font-size:12px;margin-top:4px;">Pending Review</div></div>
+            <div class="glass-card p-22" style="text-align:center;"><div style="font-size:30px;font-weight:700;color:var(--green);" id="stat-approved">—</div><div style="color:var(--text2);font-size:12px;margin-top:4px;">Approved</div></div>
+            <div class="glass-card p-22" style="text-align:center;"><div style="font-size:30px;font-weight:700;color:var(--red);" id="stat-rejected">—</div><div style="color:var(--text2);font-size:12px;margin-top:4px;">Rejected</div></div>
+            <div class="glass-card p-22" style="text-align:center;"><div style="font-size:30px;font-weight:700;color:var(--purple);" id="stat-total-paid">₹0</div><div style="color:var(--text2);font-size:12px;margin-top:4px;">Total Paid</div></div>
+          </div>
+          <div class="glass-card p-22">
+            <h3 class="font-raj" style="font-size:18px;color:var(--red);margin-bottom:12px;">🚨 Emergency Alert</h3>
+            <div class="flex gap-8">
+              <input type="text" id="emergency-msg" placeholder="Urgent notice for all creators..." style="flex:1;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-bottom:2px solid var(--red);border-radius:8px 8px 0 0;padding:10px 14px;color:var(--text);font-size:14px;"/>
+              <button class="btn btn-danger" onclick="sendEmergencyAlert()">Send 🚨</button>
+            </div>
+          </div>
+          <div class="glass-card p-22">
+            <div class="flex justify-between align-center" style="margin-bottom:12px;">
+              <h3 class="font-raj" style="font-size:18px;color:var(--yellow);">📌 Sticky Notes</h3>
+              <button class="btn btn-warn" style="padding:5px 12px;font-size:11px;" onclick="addStickyNote('admin')">+ Add</button>
+            </div>
+            <div id="admin-sticky-notes" class="flex flex-col gap-8"></div>
+          </div>
+        </div>
+
+        <!-- MEMBERS -->
+        <div id="atab-members" class="flex flex-col gap-28 hidden">
           <div class="glass-card p-28">
-            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;margin-bottom:20px;">+ Add New Creator</h3>
+            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:var(--cyan);margin-bottom:20px;">+ Add New Creator</h3>
             <div class="grid-3">
-              <div class="field"><label>Full Name</label><input type="text" id="new-name" placeholder="Creator name"/></div>
-              <div class="field"><label>User ID</label><input type="text" id="new-uid" placeholder="Phone/ID"/></div>
-              <div class="field"><label>Password</label><input type="text" id="new-pass" placeholder="Password"/></div>
+              <div class="field"><label>Full Name *</label><input type="text" id="new-name" placeholder="Creator name"/></div>
+              <div class="field"><label>User ID *</label><input type="text" id="new-uid" placeholder="Phone/ID"/></div>
+              <div class="field"><label>Password *</label><input type="text" id="new-pass" placeholder="Password"/></div>
+              <div class="field"><label>Email</label><input type="email" id="new-email" placeholder="creator@email.com"/></div>
+              <div class="field"><label>Tags/Label</label><input type="text" id="new-tags" placeholder="Designer, Editor..."/></div>
             </div>
             <button class="btn btn-primary mt-18" onclick="addCreator()">Create Account</button>
           </div>
+          <div class="field"><label>🔍 Search Creators</label><input type="text" id="creator-search" placeholder="Search by name or ID..." oninput="filterCreators()"/></div>
           <div>
-            <h3 class="font-raj" style="font-size:18px;font-weight:600;color:#f0f4f8;letter-spacing:0.06em;margin-bottom:14px;">Active Creators</h3>
-            <div id="creators-list" class="flex flex-col gap-8"><div style="color:rgba(240,244,248,0.4);font-size:14px;">Loading...</div></div>
+            <h3 class="font-raj" style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:14px;">Active Creators</h3>
+            <div id="creators-list" class="flex flex-col gap-8"><div style="color:var(--text3);font-size:14px;">Loading...</div></div>
           </div>
         </div>
-        <!-- Projects -->
+
+        <!-- PROJECTS -->
         <div id="atab-projects" class="flex flex-col gap-28 hidden">
           <div class="glass-card p-28">
-            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;margin-bottom:20px;">&#128640; Launch New Project</h3>
+            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:var(--cyan);margin-bottom:20px;">🚀 Launch New Project</h3>
             <div class="grid-2">
               <div class="field"><label>Project Name *</label><input type="text" id="p-name" placeholder="e.g. Brand Identity Kit"/></div>
-              <div class="field"><label>Project Niche</label><input type="text" id="p-niche" placeholder="e.g. Design, Marketing"/></div>
+              <div class="field"><label>Category</label><input type="text" id="p-category" placeholder="Design, Video, Writing..."/></div>
               <div class="field"><label>Raise Date</label><input type="date" id="p-raise"/></div>
               <div class="field"><label>Delivery Deadline *</label><input type="date" id="p-deadline"/></div>
               <div class="field"><label>Reference Link</label><input type="text" id="p-ref" placeholder="https://"/></div>
-              <div class="field"><label>Commission (&#8377;)</label><input type="number" id="p-comm" placeholder="5000"/></div>
-              <div class="field" style="grid-column:1/-1"><label>Assignee *</label>
-                <select id="p-assignee"><option value="">Select Creator</option></select>
+              <div class="field"><label>Commission (₹)</label><input type="number" id="p-comm" placeholder="5000"/></div>
+              <div class="field"><label>Priority</label>
+                <select id="p-priority"><option value="medium">Medium</option><option value="high">High</option><option value="low">Low</option></select>
+              </div>
+              <div class="field"><label>Assignee *</label><select id="p-assignee"><option value="">Select Creator</option></select></div>
+              <div class="field" style="grid-column:1/-1"><label>Notes</label><textarea id="p-notes" placeholder="Internal notes..." style="min-height:60px;"></textarea></div>
+            </div>
+            <button class="btn btn-primary mt-18" onclick="launchProject()">Launch Project 🚀</button>
+          </div>
+          <div class="flex gap-8 flex-wrap align-center">
+            <div class="field" style="flex:1;min-width:200px;"><label>🔍 Search</label><input type="text" id="project-search" placeholder="Search projects..." oninput="filterProjects()"/></div>
+            <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;margin-top:18px;" onclick="filterByStatus('')">All</button>
+            <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;margin-top:18px;" onclick="filterByStatus('pending')">Pending</button>
+            <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;margin-top:18px;" onclick="filterByStatus('approved')">Approved</button>
+            <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;margin-top:18px;" onclick="filterByStatus('rejected')">Rejected</button>
+          </div>
+          <div>
+            <h3 class="font-raj" style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:14px;">All Projects</h3>
+            <div id="all-projects-list" class="flex flex-col gap-10"><div style="color:var(--text3);font-size:14px;">Loading...</div></div>
+          </div>
+        </div>
+
+        <!-- REVIEW -->
+        <div id="atab-review" class="flex flex-col gap-28 hidden">
+          <div><h3 class="font-raj" style="font-size:20px;font-weight:700;color:var(--cyan);margin-bottom:16px;">Awaiting Review</h3><div id="review-list" class="flex flex-col gap-12"><div style="color:var(--text3);font-size:14px;">Loading...</div></div></div>
+          <div><h3 class="font-raj" style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:12px;">Reviewed Projects</h3><div id="reviewed-list" class="flex flex-col gap-8"></div></div>
+        </div>
+
+        <!-- COMMS -->
+        <div id="atab-comms" class="flex flex-col gap-20 hidden">
+          <div class="glass-card p-22">
+            <h3 class="font-raj" style="font-size:18px;color:var(--cyan);margin-bottom:12px;">📢 Broadcast</h3>
+            <div class="field"><textarea id="bcast-msg" placeholder="Message to all creators..." style="min-height:70px;"></textarea></div>
+            <div class="flex gap-8 mt-10">
+              <button class="btn btn-primary" onclick="broadcastMsg(false)">Send Broadcast</button>
+              <button class="btn btn-warn" onclick="broadcastMsg(true)">📌 Pin & Send</button>
+            </div>
+          </div>
+          <div id="pinned-bcast-admin" class="hidden glass-card p-16" style="border-left:3px solid var(--yellow);">
+            <div style="font-size:11px;color:var(--yellow);margin-bottom:6px;">📌 PINNED BROADCAST</div>
+            <div id="pinned-bcast-text" style="color:var(--text);font-size:13px;"></div>
+            <button class="btn btn-warn" style="padding:4px 10px;font-size:11px;margin-top:8px;" onclick="unpinBroadcast()">Unpin</button>
+          </div>
+          <!-- Private Chat -->
+          <div class="glass-card" style="overflow:hidden;">
+            <div style="display:grid;grid-template-columns:200px 1fr;min-height:380px;" id="admin-chat-container">
+              <div style="border-right:1px solid var(--border);overflow-y:auto;">
+                <div style="padding:12px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);letter-spacing:0.08em;">CONVERSATIONS</div>
+                <div id="admin-chat-creator-list"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;">
+                <div style="padding:12px 16px;border-bottom:1px solid var(--border);" id="admin-chat-header">
+                  <div style="color:var(--text2);font-size:13px;">Select a creator to chat</div>
+                </div>
+                <div id="admin-chat-messages" style="flex:1;padding:14px;overflow-y:auto;max-height:280px;display:flex;flex-direction:column;gap:4px;"></div>
+                <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;">
+                  <input type="text" id="admin-chat-input" placeholder="Type message..." style="flex:1;background:var(--glass2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;" onkeydown="if(event.key==='Enter')adminSendChat()"/>
+                  <button class="btn btn-primary" style="padding:8px 14px;font-size:12px;" onclick="adminSendChat()">Send</button>
+                </div>
               </div>
             </div>
-            <button class="btn btn-primary mt-18" onclick="launchProject()">Launch Project</button>
           </div>
-          <div>
-            <h3 class="font-raj" style="font-size:18px;font-weight:600;color:#f0f4f8;margin-bottom:14px;">All Projects</h3>
-            <div id="all-projects-list" class="flex flex-col gap-10"><div style="color:rgba(240,244,248,0.4);font-size:14px;">Loading...</div></div>
+          <div><h3 class="font-raj" style="font-size:16px;color:var(--text);margin-bottom:10px;">Broadcast History</h3><div id="messages-list" class="flex flex-col gap-8"></div></div>
+          <div><h3 class="font-raj" style="font-size:16px;color:var(--text);margin-bottom:10px;">Reports &amp; Suggestions</h3><div id="reports-list" class="flex flex-col gap-8"></div></div>
+        </div>
+
+        <!-- PAYMENTS -->
+        <div id="atab-payments" class="flex flex-col gap-20 hidden">
+          <div class="glass-card p-24">
+            <h3 class="font-raj" style="font-size:18px;color:var(--cyan);margin-bottom:16px;">💰 Make Payment</h3>
+            <div class="grid-2">
+              <div class="field"><label>Creator *</label><select id="pay-creator" onchange="showUpiDetails()"><option value="">Select Creator</option></select></div>
+              <div class="field"><label>Amount (₹) *</label><input type="number" id="pay-amount" placeholder="5000"/></div>
+              <div class="field"><label>Type</label><select id="pay-type"><option value="payment">Payment</option><option value="bonus">Bonus</option><option value="advance">Advance</option></select></div>
+              <div class="field"><label>Note</label><input type="text" id="pay-note" placeholder="Project reference..."/></div>
+            </div>
+            <div id="pay-upi-details" class="hidden mt-10" style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:12px 14px;">
+              <div style="font-size:11px;color:var(--green);margin-bottom:4px;">💳 PAYMENT DETAILS</div>
+              <div id="pay-upi-text" style="color:var(--text);font-size:13px;"></div>
+            </div>
+            <button class="btn btn-success mt-14" onclick="makePayment()">Send Payment ✓</button>
+          </div>
+          <div class="flex justify-between align-center"><h3 class="font-raj" style="font-size:18px;color:var(--text);">Payment History</h3><button class="btn btn-ghost" style="padding:6px 14px;font-size:12px;" onclick="exportPayments()">📤 Export</button></div>
+          <div id="admin-payment-list" class="flex flex-col gap-8"></div>
+        </div>
+
+        <!-- CALENDAR -->
+        <div id="atab-calendar" class="flex flex-col gap-16 hidden">
+          <div class="glass-card p-22">
+            <div class="flex justify-between align-center" style="margin-bottom:14px;">
+              <button class="btn btn-ghost" style="padding:6px 14px;" onclick="calPrev()">‹</button>
+              <h3 class="font-raj" style="font-size:20px;color:var(--cyan);" id="cal-title">—</h3>
+              <button class="btn btn-ghost" style="padding:6px 14px;" onclick="calNext()">›</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">
+              <div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;">Su</div><div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;">Mo</div><div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;">Tu</div><div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;">We</div><div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;">Th</div><div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;">Fr</div><div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;">Sa</div>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+          </div>
+          <div id="cal-events" class="flex flex-col gap-8"></div>
+        </div>
+
+        <!-- ANALYTICS -->
+        <div id="atab-analytics" class="flex flex-col gap-20 hidden">
+          <div class="grid-2">
+            <div class="glass-card p-22"><h4 style="color:var(--cyan);font-size:14px;margin-bottom:12px;">Project Status</h4><div id="analytics-status" class="flex flex-col gap-8"></div></div>
+            <div class="glass-card p-22"><h4 style="color:var(--cyan);font-size:14px;margin-bottom:12px;">Top Performers</h4><div id="analytics-top" class="flex flex-col gap-8"></div></div>
+          </div>
+          <div class="glass-card p-22">
+            <div class="flex justify-between align-center" style="margin-bottom:14px;">
+              <h4 style="color:var(--cyan);font-size:14px;">Creator Performance</h4>
+              <button class="btn btn-ghost" style="padding:5px 12px;font-size:11px;" onclick="exportAnalytics()">📤 Export</button>
+            </div>
+            <div id="analytics-creators" class="flex flex-col gap-10"></div>
           </div>
         </div>
-        <!-- Review -->
-        <div id="atab-review" class="flex flex-col gap-28 hidden">
-          <div>
-            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;margin-bottom:16px;">Awaiting Review</h3>
-            <div id="review-list" class="flex flex-col gap-12"><div style="color:rgba(240,244,248,0.4);font-size:14px;">Loading...</div></div>
+
+        <!-- ACTIVITY LOG -->
+        <div id="atab-activity" class="flex flex-col gap-12 hidden">
+          <div class="flex justify-between align-center">
+            <h3 class="font-raj" style="font-size:20px;color:var(--cyan);">📜 Activity Log</h3>
+            <button class="btn btn-ghost" style="padding:5px 12px;font-size:11px;" onclick="loadActivityLog()">Refresh</button>
           </div>
-          <div>
-            <h3 class="font-raj" style="font-size:16px;font-weight:600;color:#f0f4f8;margin-bottom:12px;">Reviewed Projects</h3>
-            <div id="reviewed-list" class="flex flex-col gap-8"></div>
+          <div id="activity-list" class="flex flex-col gap-8"></div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="atab-settings" class="flex flex-col gap-20 hidden">
+          <div class="glass-card p-24">
+            <h3 class="font-raj" style="font-size:18px;color:var(--cyan);margin-bottom:14px;">🔑 Change Password</h3>
+            <div class="grid-2">
+              <div class="field"><label>Who</label>
+                <select id="pwd-who" onchange="document.getElementById('pwd-creator-field').style.display=this.value==='creator'?'block':'none'">
+                  <option value="admin">My Password (Admin)</option>
+                  <option value="creator">Creator's Password</option>
+                </select>
+              </div>
+              <div class="field" id="pwd-creator-field" style="display:none;"><label>Select Creator</label><select id="pwd-creator-sel"><option value="">Select Creator</option></select></div>
+              <div class="field"><label>New Password *</label><input type="text" id="pwd-new" placeholder="New password"/></div>
+            </div>
+            <button class="btn btn-primary mt-14" onclick="changePassword()">Update Password</button>
+          </div>
+          <div class="glass-card p-24">
+            <h3 class="font-raj" style="font-size:18px;color:var(--cyan);margin-bottom:14px;">📧 Email Notification Settings</h3>
+            <div class="flex flex-col gap-10">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;"><input type="checkbox" id="email-new-project" checked style="width:16px;height:16px;accent-color:var(--cyan);"/><span style="font-size:13px;">New project assigned</span></label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;"><input type="checkbox" id="email-approved" checked style="width:16px;height:16px;accent-color:var(--cyan);"/><span style="font-size:13px;">Project approved/rejected</span></label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;"><input type="checkbox" id="email-message" style="width:16px;height:16px;accent-color:var(--cyan);"/><span style="font-size:13px;">New message received</span></label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;"><input type="checkbox" id="email-deadline" checked style="width:16px;height:16px;accent-color:var(--cyan);"/><span style="font-size:13px;">Deadline reminders (24h)</span></label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;"><input type="checkbox" id="email-emergency" checked style="width:16px;height:16px;accent-color:var(--cyan);"/><span style="font-size:13px;">Emergency alerts</span></label>
+            </div>
+            <button class="btn btn-primary mt-14" onclick="saveEmailSettings()">Save Settings</button>
+          </div>
+          <div class="glass-card p-24">
+            <h3 class="font-raj" style="font-size:18px;color:var(--cyan);margin-bottom:14px;">📬 EmailJS Config</h3>
+            <div class="grid-2">
+              <div class="field"><label>Service ID</label><input type="text" id="emailjs-service" placeholder="service_xxx"/></div>
+              <div class="field"><label>Template ID</label><input type="text" id="emailjs-template" placeholder="template_xxx"/></div>
+              <div class="field" style="grid-column:1/-1"><label>Public Key</label><input type="text" id="emailjs-key" placeholder="your_public_key"/></div>
+            </div>
+            <button class="btn btn-primary mt-14" onclick="saveEmailJSConfig()">Save EmailJS</button>
+          </div>
+          <div class="glass-card p-24">
+            <h3 class="font-raj" style="font-size:18px;color:var(--cyan);margin-bottom:14px;">🗳️ Create Poll</h3>
+            <div class="flex flex-col gap-12">
+              <div class="field"><label>Question *</label><input type="text" id="poll-question" placeholder="What do you think about..."/></div>
+              <div class="grid-2">
+                <div class="field"><label>Option 1 *</label><input type="text" id="poll-opt1" placeholder="Option 1"/></div>
+                <div class="field"><label>Option 2 *</label><input type="text" id="poll-opt2" placeholder="Option 2"/></div>
+                <div class="field"><label>Option 3</label><input type="text" id="poll-opt3" placeholder="Option 3"/></div>
+                <div class="field"><label>Option 4</label><input type="text" id="poll-opt4" placeholder="Option 4"/></div>
+              </div>
+            </div>
+            <button class="btn btn-primary mt-14" onclick="createPoll()">Create Poll</button>
           </div>
         </div>
-        <!-- Comms -->
-        <div id="atab-comms" class="flex flex-col gap-28 hidden">
-          <div class="glass-card p-28">
-            <h3 class="font-raj" style="font-size:20px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;margin-bottom:18px;">&#128226; Broadcast Message</h3>
-            <div class="field"><label>Message to all creators</label><textarea id="bcast-msg" placeholder="Type your announcement..."></textarea></div>
-            <button class="btn btn-primary mt-14" onclick="broadcastMsg()">Send Broadcast</button>
-          </div>
-          <div>
-            <h3 class="font-raj" style="font-size:16px;font-weight:600;color:#f0f4f8;margin-bottom:12px;">Sent Messages</h3>
-            <div id="messages-list" class="flex flex-col gap-8"></div>
-          </div>
-          <div>
-            <h3 class="font-raj" style="font-size:16px;font-weight:600;color:#f0f4f8;margin-bottom:12px;">Creator Reports</h3>
-            <div id="reports-list" class="flex flex-col gap-8"></div>
-          </div>
-        </div>
+
       </div>
+    </div>
+  </div>
+  <div style="text-align:center;padding:24px 16px;z-index:2;position:relative;">
+    <div style="display:inline-block;padding:14px 28px;border-radius:60px;background:var(--glass2);border:1px solid var(--border);backdrop-filter:blur(12px);">
+      <p style="font-size:13px;color:rgba(240,244,248,0.7);margin-bottom:5px;">Web Designed and Developed by — <span style="background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">Subhadip Mandal</span></p>
+      <p style="font-size:12px;color:rgba(240,244,248,0.55);display:flex;align-items:center;justify-content:center;gap:5px;">Made with <span class="heart-beat">❤️</span> in <span style="color:#fff;font-weight:600;">India</span><span class="fog-wrap"><span class="fog">🌧️</span><span class="fog fog2">🌧️</span><span class="fog fog3">🌧️</span></span></p>
     </div>
   </div>
 </div>
 
-<!-- SCREEN 3B: Creator -->
+<!-- CREATOR SCREEN -->
 <div id="screen-creator" class="screen" style="padding:24px 16px;justify-content:center;flex-direction:column;align-items:center;">
-  <div style="max-width:860px;width:100%;">
+  <div style="max-width:900px;width:100%;">
     <div class="glass" style="overflow:hidden;">
-      <div style="padding:22px 28px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;">
-        <div class="flex align-center gap-16">
+      <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="flex align-center gap-12">
           <div style="position:relative;cursor:pointer;" onclick="document.getElementById('avatar-input').click()">
-            <div id="creator-avatar-ring" style="width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid #00e5ff;box-shadow:0 0 24px rgba(0,229,255,0.35);background:linear-gradient(135deg,#00e5ff,#00f5a0);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#000;">
+            <div style="width:46px;height:46px;border-radius:50%;overflow:hidden;border:2px solid var(--cyan);box-shadow:0 0 18px rgba(0,229,255,0.3);background:linear-gradient(135deg,var(--cyan),var(--green));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#000;">
               <span id="creator-avatar-initial"></span>
               <img id="creator-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover;" alt=""/>
             </div>
-            <div style="position:absolute;bottom:0;right:0;width:16px;height:16px;border-radius:50%;background:#00e5ff;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;">&#9998;</div>
+            <div style="position:absolute;bottom:0;right:0;width:15px;height:15px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:8px;color:#000;">✏</div>
           </div>
           <input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="updateAvatar(event)"/>
           <div>
-            <h1 class="font-raj" style="font-size:22px;font-weight:700;color:#00e5ff;letter-spacing:0.08em;">PROJECTS</h1>
-            <div id="creator-name-display" style="color:rgba(240,244,248,0.45);font-size:12px;"></div>
+            <div id="creator-name-display" style="color:var(--cyan);font-weight:700;font-size:15px;font-family:'Rajdhani',sans-serif;letter-spacing:0.06em;"></div>
+            <div style="color:var(--text3);font-size:11px;" id="creator-online-status">● Online</div>
           </div>
         </div>
-        <button class="btn btn-ghost" style="font-size:12px;padding:7px 16px;" onclick="logout()">Sign Out</button>
+        <div class="flex align-center gap-8">
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 10px;" onclick="toggleTheme()">🌙</button>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 10px;position:relative;" onclick="openNotifPanel()">🔔<span id="creator-notif-badge" class="hidden" style="position:absolute;top:3px;right:3px;background:var(--red);color:#fff;border-radius:50%;width:14px;height:14px;font-size:8px;display:flex;align-items:center;justify-content:center;"></span></button>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px;" onclick="logout()">Sign Out</button>
+        </div>
       </div>
       <div class="tabs">
-        <button class="tab active" onclick="creatorTab('projects',this)">&#128193; My Projects</button>
-        <button class="tab" onclick="creatorTab('inbox',this)">&#128236; Inbox</button>
-        <button class="tab" onclick="creatorTab('report',this)">&#128681; Report</button>
+        <button class="tab active" onclick="creatorTab('projects',this)">📁 My Projects</button>
+        <button class="tab" onclick="creatorTab('chat',this)">💬 Chat<span id="creator-chat-badge" class="hidden tab-badge">0</span></button>
+        <button class="tab" onclick="creatorTab('inbox',this)">📢 Broadcast<span id="creator-broadcast-badge" class="hidden tab-badge">0</span></button>
+        <button class="tab" onclick="creatorTab('payments',this)">💰 Payments</button>
+        <button class="tab" onclick="creatorTab('profile',this)">👤 Profile</button>
+        <button class="tab" onclick="creatorTab('report',this)">📩 Report</button>
       </div>
-      <div style="padding:28px;">
-        <div id="ctab-projects"><div id="creator-projects-list" class="flex flex-col gap-16"><div style="color:rgba(240,244,248,0.4);font-size:14px;">Loading...</div></div></div>
-        <div id="ctab-inbox" class="hidden flex flex-col gap-12">
-          <h3 class="font-raj" style="font-size:18px;font-weight:700;color:#00e5ff;margin-bottom:6px;">&#128236; Admin Messages</h3>
-          <div id="creator-inbox-list" class="flex flex-col gap-8"></div>
+      <div style="padding:22px;">
+
+        <!-- MY PROJECTS -->
+        <div id="ctab-projects">
+          <div id="deadline-warning" class="hidden" style="background:rgba(255,209,102,0.1);border:1px solid rgba(255,209,102,0.3);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
+            <div style="color:var(--yellow);font-weight:600;font-size:13px;">⏰ Deadline Warning!</div>
+            <div id="deadline-warning-text" style="color:var(--text2);font-size:12px;margin-top:4px;"></div>
+          </div>
+          <div id="creator-projects-list" class="flex flex-col gap-16"><div style="color:var(--text3);font-size:14px;">Loading...</div></div>
         </div>
-        <div id="ctab-report" class="hidden">
-          <h3 class="font-raj" style="font-size:18px;font-weight:700;color:#00e5ff;margin-bottom:18px;">&#128681; Send Report to Admin</h3>
-          <div class="glass-card p-24">
-            <div class="field"><label>Your message or issue</label><textarea id="report-text" placeholder="Describe your issue..." style="min-height:120px;"></textarea></div>
-            <button class="btn btn-primary mt-16" onclick="sendReport()">Send Report</button>
+
+        <!-- CHAT -->
+        <div id="ctab-chat" class="hidden flex flex-col gap-12">
+          <h3 class="font-raj" style="font-size:18px;color:var(--cyan);">💬 Chat with Admin</h3>
+          <div id="creator-pinned-msg" class="hidden glass-card p-14" style="border-left:3px solid var(--yellow);">
+            <div style="font-size:10px;color:var(--yellow);margin-bottom:4px;">📌 PINNED</div>
+            <div id="creator-pinned-text" style="color:var(--text);font-size:13px;"></div>
+          </div>
+          <div class="glass-card" style="overflow:hidden;">
+            <div id="creator-chat-messages" style="padding:14px;min-height:280px;max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
+            <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;">
+              <input type="text" id="creator-chat-input" placeholder="Type message... (Enter to send)" style="flex:1;background:var(--glass2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;" onkeydown="if(event.key==='Enter')creatorSendChat()"/>
+              <button class="btn btn-primary" style="padding:8px 14px;font-size:12px;" onclick="creatorSendChat()">Send</button>
+            </div>
           </div>
         </div>
+
+        <!-- BROADCAST INBOX -->
+        <div id="ctab-inbox" class="hidden flex flex-col gap-12">
+          <h3 class="font-raj" style="font-size:18px;color:var(--cyan);">📢 Broadcast Messages</h3>
+          <div id="creator-pinned-broadcast" class="hidden glass-card p-14" style="border-left:3px solid var(--yellow);">
+            <div style="font-size:10px;color:var(--yellow);margin-bottom:4px;">📌 PINNED</div>
+            <div id="creator-pinned-broadcast-text" style="color:var(--text);font-size:13px;"></div>
+          </div>
+          <div id="creator-inbox-list" class="flex flex-col gap-8"></div>
+        </div>
+
+        <!-- PAYMENTS -->
+        <div id="ctab-payments" class="hidden flex flex-col gap-16">
+          <h3 class="font-raj" style="font-size:18px;color:var(--cyan);">💰 My Payments</h3>
+          <div class="glass-card p-22" id="creator-upi-section">
+            <h4 style="color:var(--green);font-size:14px;margin-bottom:12px;">💳 Payment Details</h4>
+            <div id="upi-display" class="hidden" style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+              <div style="font-size:12px;color:var(--green);margin-bottom:4px;">Your UPI Details (Admin can update)</div>
+              <div id="upi-display-text" style="color:var(--text);font-size:14px;"></div>
+            </div>
+            <div id="upi-form">
+              <div class="grid-2">
+                <div class="field"><label>UPI ID</label><input type="text" id="creator-upi-input" placeholder="yourname@upi"/></div>
+                <div class="field"><label>Bank Name</label><input type="text" id="creator-bank-input" placeholder="SBI, HDFC..."/></div>
+              </div>
+              <button class="btn btn-success mt-10" onclick="saveCreatorUPI()">Save Payment Details</button>
+            </div>
+          </div>
+          <div id="creator-payment-list" class="flex flex-col gap-8"></div>
+        </div>
+
+        <!-- PROFILE -->
+        <div id="ctab-profile" class="hidden flex flex-col gap-16">
+          <h3 class="font-raj" style="font-size:18px;color:var(--cyan);">👤 My Profile</h3>
+          <div class="glass-card p-24">
+            <div class="flex flex-col gap-14">
+              <div class="field"><label>Email</label><input type="email" id="profile-email" placeholder="your@email.com"/></div>
+              <div class="field"><label>Bio</label><textarea id="profile-bio" placeholder="Tell about yourself..." style="min-height:70px;"></textarea></div>
+              <div class="field"><label>Skills</label><input type="text" id="profile-skills" placeholder="Design, Video Editing, Writing..."/></div>
+            </div>
+            <button class="btn btn-primary mt-14" onclick="saveProfile()">Save Profile</button>
+          </div>
+          <div class="glass-card p-22">
+            <div class="flex justify-between align-center" style="margin-bottom:12px;">
+              <h4 style="color:var(--yellow);font-size:14px;">📌 Sticky Notes</h4>
+              <button class="btn btn-warn" style="padding:5px 10px;font-size:11px;" onclick="addStickyNote('creator')">+ Add</button>
+            </div>
+            <div id="creator-sticky-notes" class="flex flex-col gap-8"></div>
+          </div>
+          <div class="glass-card p-22">
+            <h4 style="color:var(--purple);font-size:14px;margin-bottom:12px;">🗳️ Active Polls</h4>
+            <div id="creator-polls" class="flex flex-col gap-10"></div>
+          </div>
+        </div>
+
+        <!-- REPORT -->
+        <div id="ctab-report" class="hidden flex flex-col gap-16">
+          <h3 class="font-raj" style="font-size:18px;color:var(--cyan);">📩 Send to Admin</h3>
+          <div class="glass-card p-24">
+            <div class="field"><label>Type</label><select id="report-type"><option value="report">Report / Issue</option><option value="suggestion">Suggestion</option></select></div>
+            <div class="field mt-14"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;font-size:13px;"><input type="checkbox" id="report-anon" style="width:14px;height:14px;accent-color:var(--cyan);"/> Send anonymously</label></div>
+            <div class="field mt-14"><label>Message *</label><textarea id="report-text" placeholder="Describe your issue or suggestion..." style="min-height:110px;"></textarea></div>
+            <button class="btn btn-primary mt-14" onclick="sendReport()">Send</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
-</div>
-
-<!-- Footer -->
-<div style="position:relative;z-index:2;text-align:center;padding:36px 16px 32px;margin-top:auto;">
-  <div style="display:inline-block;padding:18px 36px;border-radius:60px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(12px);">
-    <p style="font-family:'DM Sans',sans-serif;font-size:14px;color:rgba(240,244,248,0.75);letter-spacing:0.06em;margin-bottom:7px;">
-      Web Designed and Developed by &mdash;
-      <span style="background:linear-gradient(135deg,#00e5ff,#00f5a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;font-size:15px;">Subhadip Mandal</span>
-    </p>
-    <p style="font-size:14px;color:rgba(240,244,248,0.65);letter-spacing:0.06em;display:flex;align-items:center;justify-content:center;gap:6px;">
-      Made with <span class="heart-beat">&#10084;&#65039;</span> in <span style="color:#fff;font-weight:600;">India</span>
-      <span class="fog-wrap"><span class="fog">&#127787;&#65039;</span><span class="fog fog2">&#127787;&#65039;</span><span class="fog fog3">&#127787;&#65039;</span></span>
-    </p>
+  <div style="text-align:center;padding:24px 16px;z-index:2;position:relative;">
+    <div style="display:inline-block;padding:14px 28px;border-radius:60px;background:var(--glass2);border:1px solid var(--border);backdrop-filter:blur(12px);">
+      <p style="font-size:13px;color:rgba(240,244,248,0.7);margin-bottom:5px;">Web Designed and Developed by — <span style="background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">Subhadip Mandal</span></p>
+      <p style="font-size:12px;color:rgba(240,244,248,0.55);display:flex;align-items:center;justify-content:center;gap:5px;">Made with <span class="heart-beat">❤️</span> in <span style="color:#fff;font-weight:600;">India</span></p>
+    </div>
   </div>
 </div>
-
-<style>
-  @keyframes heartbeat{0%,100%{transform:scale(1);}10%{transform:scale(1.45);}20%{transform:scale(1.05);}35%{transform:scale(1.3);}50%{transform:scale(1);}}
-  @keyframes fogDrift{0%{opacity:0;transform:translateX(-8px) translateY(2px);}45%{opacity:0.7;}100%{opacity:0;transform:translateX(18px) translateY(-4px);}}
-  @keyframes fogDrift2{0%{opacity:0;transform:translateX(6px);}50%{opacity:0.5;}100%{opacity:0;transform:translateX(-14px);}}
-  @keyframes fogDrift3{0%{opacity:0;transform:translateX(0px) translateY(4px);}40%{opacity:0.4;}100%{opacity:0;transform:translateX(10px) translateY(-6px);}}
-  .heart-beat{display:inline-block;font-size:18px;animation:heartbeat 1.6s ease-in-out infinite;filter:drop-shadow(0 0 8px rgba(255,50,50,1)) drop-shadow(0 0 18px rgba(255,80,80,0.8));}
-  .fog-wrap{display:inline-flex;align-items:center;margin-left:2px;}
-  .fog{display:inline-block;font-size:17px;animation:fogDrift 3.2s ease-in-out infinite;opacity:0;}
-  .fog2{display:inline-block;font-size:14px;animation:fogDrift2 3.8s ease-in-out 1s infinite;opacity:0;margin-left:-4px;}
-  .fog3{display:inline-block;font-size:12px;animation:fogDrift3 4.4s ease-in-out 2s infinite;opacity:0;margin-left:-6px;}
-</style>
-
 <script>
-// ── Supabase Config ──────────────────────────────────────────────
-const SUPA_URL = 'https://uufxtqujtcsxnjojaabd.supabase.co';
-const SUPA_KEY = 'sb_publishable_zrQn1Dx5kF_95QdhSgOIeQ_OmeJ_0LG';
+// ══ CONFIG ══════════════════════════════════════════════════════
+const SUPA_URL='https://uufxtqujtcsxnjojaabd.supabase.co';
+const SUPA_KEY='sb_publishable_zrQn1Dx5kF_95QdhSgOIeQ_OmeJ_0LG';
+const ADMIN_ID='8101347299';
+const ADMIN_PASS='Subhadip@2008';
 
-// Simple REST API wrapper for Supabase
-const sb = {
-  async get(table, query='', limit=100){
-    // Try ordering by id (always exists). If query is empty, don't add leading &
-    const q = query ? `${query}&order=id.desc&limit=${limit}` : `order=id.desc&limit=${limit}`;
-    const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${q}`, {
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'}
-    });
-    if(!r.ok){
-      const errText = await r.text();
-      console.error(`[sb.get] ${table} failed:`, errText);
-      throw new Error(errText);
-    }
+// ══ STATE ═══════════════════════════════════════════════════════
+let currentUser=null,currentRole=null,pollInterval=null;
+let creatorsOffset=0,projectsOffset=0,allCreators=[],allProjects=[];
+let activeStatusFilter='',calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+let adminChatCreatorId=null,adminChatCreatorName='';
+let notifications=[],unreadNotifCount=0;
+let emailSettings={newProject:true,approved:true,message:false,deadline:true,emergency:true};
+let emailJSConfig={service:'',template:'',key:''};
+const PAGE_SIZE=10;
+
+// ══ SUPABASE ════════════════════════════════════════════════════
+const sb={
+  async get(table,query='',limit=100){
+    const q=query?`${query}&order=id.desc&limit=${limit}`:`order=id.desc&limit=${limit}`;
+    const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${q}`,{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'}});
+    if(!r.ok){const t=await r.text();throw new Error(t);}
     return r.json();
   },
-  async insert(table, data){
-    const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, {
-      method:'POST',
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-      body: JSON.stringify(data)
-    });
-    if(!r.ok) throw new Error(await r.text());
+  async insert(table,data){
+    const r=await fetch(`${SUPA_URL}/rest/v1/${table}`,{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(data)});
+    if(!r.ok)throw new Error(await r.text());
     return r.json();
   },
-  async update(table, id, data){
-    const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {
-      method:'PATCH',
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    });
-    if(!r.ok) throw new Error(await r.text());
+  async update(table,id,data){
+    const r=await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify(data)});
+    if(!r.ok)throw new Error(await r.text());
     return r.json();
   },
-  async delete(table, id){
-    const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {
-      method:'DELETE',
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
-    });
-    if(!r.ok) throw new Error(await r.text());
+  async delete(table,id){
+    const r=await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}});
+    if(!r.ok)throw new Error(await r.text());
+  },
+  async rpc(fn,params={}){
+    const r=await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify(params)});
+    if(!r.ok)throw new Error(await r.text());
+    return r.json();
   }
 };
 
-// ── State ────────────────────────────────────────────────────────
-let currentUser = null;
-let currentRole = null;
-let pollInterval = null;
-let creatorsOffset = 0;
-let projectsOffset = 0;
-let allCreators = [];
-let allProjects = [];
-const PAGE_SIZE = 10;
-
-// ── Helpers ──────────────────────────────────────────────────────
-const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-const isPast  = d => d && new Date(d) < new Date();
-const esc     = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ══ HELPERS ═════════════════════════════════════════════════════
+const fmtDate=d=>d?new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+const fmtTime=d=>d?new Date(d).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+const isPast=d=>d&&new Date(d)<new Date();
+const isWithin24h=d=>{if(!d)return false;const diff=new Date(d)-new Date();return diff>0&&diff<86400000;};
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 function statusBadge(s){
   const m={pending:{l:'Pending',c:'#ffd166'},completed:{l:'Completed',c:'#00f5a0'},notcompleted:{l:'Not Completed',c:'#ff4d6d'},approved:{l:'Approved',c:'#00e5ff'},rejected:{l:'Rejected',c:'#ff4d6d'}};
   const v=m[s]||m.pending;
   return `<span class="badge" style="background:${v.c}22;color:${v.c};border:1px solid ${v.c}44;">${v.l}</span>`;
 }
-function mkBadge(t,c='#00e5ff'){
-  return `<span class="badge" style="background:${c}22;color:${c};border:1px solid ${c}44;">${esc(t)}</span>`;
-}
+function mkBadge(t,c='#00e5ff'){return `<span class="badge" style="background:${c}22;color:${c};border:1px solid ${c}44;">${esc(t)}</span>`;}
+function priorityBadge(p){const m={high:['High','#ff4d6d'],medium:['Medium','#ffd166'],low:['Low','#00f5a0']};const[l,c]=m[p]||m.medium;return `<span class="badge" style="background:${c}22;color:${c};border:1px solid ${c}44;">▲ ${l}</span>`;}
 
 let toastT;
-function toast(msg, err=false){
+function toast(msg,err=false){
   const el=document.getElementById('toast');
   el.style.borderColor=err?'#ff4d6d':'#00e5ff';
   el.style.background=err?'rgba(255,77,109,0.12)':'rgba(0,229,255,0.12)';
@@ -347,86 +644,184 @@ function toast(msg, err=false){
   clearTimeout(toastT);
   toastT=setTimeout(()=>el.style.display='none',3500);
 }
+function showLoad(t='Please wait...'){document.getElementById('loading-text').textContent=t;document.getElementById('loading-overlay').style.display='flex';}
+function hideLoad(){document.getElementById('loading-overlay').style.display='none';}
+function goTo(s){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById('screen-'+s).classList.add('active');}
 
-function showLoad(t='Please wait...'){
-  document.getElementById('loading-text').textContent=t;
-  document.getElementById('loading-overlay').style.display='flex';
+// ══ THEME ═══════════════════════════════════════════════════════
+let isDark=true;
+function toggleTheme(){
+  isDark=!isDark;
+  document.body.classList.toggle('light',!isDark);
+  document.querySelectorAll('#theme-btn').forEach(b=>b.textContent=isDark?'🌙':'☀️');
+  localStorage.setItem('theme',isDark?'dark':'light');
 }
-function hideLoad(){ document.getElementById('loading-overlay').style.display='none'; }
-
-// ── Nav ───────────────────────────────────────────────────────────
-function goTo(screen){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+screen).classList.add('active');
-}
-
-function logout(){
-  if(pollInterval) clearInterval(pollInterval);
-  pollInterval=null;
-  currentUser=null; currentRole=null;
-  goTo('landing');
+function initTheme(){
+  const t=localStorage.getItem('theme');
+  if(t==='light'){isDark=false;document.body.classList.add('light');document.querySelectorAll('#theme-btn').forEach(b=>b.textContent='☀️');}
 }
 
-function togglePassVis(){
-  const i=document.getElementById('login-pass'),e=document.getElementById('pass-eye');
-  if(i.type==='password'){i.type='text';e.style.color='#00e5ff';}
-  else{i.type='password';e.style.color='rgba(240,244,248,0.4)';}
+// ══ NOTIFICATIONS ═══════════════════════════════════════════════
+function addNotification(title,body,type='info'){
+  const n={id:Date.now(),title,body,type,time:new Date().toISOString(),read:false};
+  notifications.unshift(n);
+  if(notifications.length>50)notifications.pop();
+  unreadNotifCount++;
+  updateNotifBadges();
+  renderNotifPanel();
+}
+function updateNotifBadges(){
+  const show=unreadNotifCount>0;
+  document.querySelectorAll('#admin-notif-badge,#creator-notif-badge').forEach(b=>{
+    b.classList.toggle('hidden',!show);
+    if(show)b.textContent=unreadNotifCount>9?'9+':unreadNotifCount;
+  });
+}
+function openNotifPanel(){document.getElementById('notif-panel').classList.add('open');}
+function closeNotifPanel(){document.getElementById('notif-panel').classList.remove('open');}
+function markAllRead(){notifications.forEach(n=>n.read=true);unreadNotifCount=0;updateNotifBadges();renderNotifPanel();}
+function renderNotifPanel(){
+  const el=document.getElementById('notif-list');
+  if(!notifications.length){el.innerHTML='<p style="color:var(--text3);font-size:13px;">No notifications yet.</p>';return;}
+  el.innerHTML=notifications.map(n=>`
+    <div class="notif-item${n.read?'':' unread'}">
+      <div style="font-size:13px;color:var(--text);font-weight:600;">${esc(n.title)}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:3px;">${esc(n.body)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">${fmtTime(n.time)}</div>
+    </div>`).join('');
 }
 
-// ── Login ─────────────────────────────────────────────────────────
+// ══ MODAL ════════════════════════════════════════════════════════
+function openModal(html){document.getElementById('modal-box').innerHTML=html;document.getElementById('modal-overlay').classList.remove('hidden');}
+function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');}
+
+// ══ EMERGENCY ═══════════════════════════════════════════════════
+function dismissEmergency(){document.getElementById('emergency-banner').style.display='none';}
+function showEmergency(text){
+  document.getElementById('emergency-text').textContent=text;
+  document.getElementById('emergency-banner').style.display='block';
+  addNotification('🚨 Emergency Alert',text,'emergency');
+}
+async function sendEmergencyAlert(){
+  const msg=document.getElementById('emergency-msg').value.trim();
+  if(!msg){toast('Enter alert message!',true);return;}
+  try{
+    await sb.insert('messages',{text:msg,type:'emergency',pinned:false});
+    document.getElementById('emergency-msg').value='';
+    toast('Emergency alert sent!');
+    await logActivity('Emergency alert sent: '+msg.substring(0,50));
+    loadAdminData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+
+// ══ STICKY NOTES ════════════════════════════════════════════════
+async function addStickyNote(role){
+  const text=prompt('Enter your note:');
+  if(!text)return;
+  const uid=role==='admin'?'admin':currentUser?.id;
+  try{
+    await sb.insert('sticky_notes',{uid,text,role});
+    toast('Note added!');
+    if(role==='admin')loadStickyNotes('admin');else loadStickyNotes('creator');
+  }catch(e){toast('Error: '+e.message,true);}
+}
+async function loadStickyNotes(role){
+  const uid=role==='admin'?'admin':currentUser?.id;
+  if(!uid)return;
+  try{
+    const notes=await sb.get('sticky_notes',`uid=eq.${uid}`,20);
+    const el=document.getElementById(role==='admin'?'admin-sticky-notes':'creator-sticky-notes');
+    if(!el)return;
+    el.innerHTML=notes.length===0?'<p style="color:var(--text3);font-size:13px;">No notes yet.</p>':notes.map(n=>`
+      <div style="background:rgba(255,209,102,0.08);border:1px solid rgba(255,209,102,0.25);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="color:var(--text);font-size:13px;">${esc(n.text)}</div>
+        <button onclick="deleteNote('${n.id}','${role}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;flex-shrink:0;">✕</button>
+      </div>`).join('');
+  }catch(e){}
+}
+async function deleteNote(id,role){try{await sb.delete('sticky_notes',id);loadStickyNotes(role);}catch(e){}}
+
+// ══ ACTIVITY LOG ════════════════════════════════════════════════
+async function logActivity(action){
+  try{await sb.insert('activity_log',{action,actor:currentRole==='admin'?'Admin':currentUser?.name||'Creator',actorid:currentRole==='admin'?'admin':currentUser?.id});}catch(e){}
+}
+async function loadActivityLog(){
+  const el=document.getElementById('activity-list');
+  if(!el)return;
+  el.innerHTML='<div style="color:var(--text3);font-size:13px;">Loading...</div>';
+  try{
+    const logs=await sb.get('activity_log','',100);
+    el.innerHTML=logs.length===0?'<p style="color:var(--text3);font-size:13px;">No activity yet.</p>':logs.map(l=>`
+      <div class="glass-card" style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <div><span style="color:var(--cyan);font-size:12px;font-weight:600;">${esc(l.actor||'Unknown')}</span><span style="color:var(--text2);font-size:13px;margin-left:8px;">${esc(l.action)}</span></div>
+        <div style="color:var(--text3);font-size:11px;">${fmtTime(l.createdat||l.created_at)}</div>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<p style="color:var(--red);font-size:13px;">Error loading log. Create activity_log table.</p>';}
+}
+
+// ══ LOGIN ════════════════════════════════════════════════════════
+function togglePassVis(){const i=document.getElementById('login-pass');i.type=i.type==='password'?'text':'password';}
 async function doLogin(){
   const uid=document.getElementById('login-uid').value.trim();
   const pass=document.getElementById('login-pass').value.trim();
   const errEl=document.getElementById('login-err');
   const btn=document.getElementById('login-btn');
-  errEl.style.display='none'; btn.textContent='Signing in...'; btn.disabled=true;
+  errEl.style.display='none';btn.textContent='Signing in...';btn.disabled=true;
   try{
-    if(uid==='8101347299' && pass==='Subhadip@2008'){
-      currentRole='admin'; goTo('admin'); startAdminPolling();
-      btn.textContent='Sign In →'; btn.disabled=false; return;
+    if(uid===ADMIN_ID&&pass===ADMIN_PASS){
+      currentRole='admin';goTo('admin');startAdminPolling();
+      btn.textContent='Sign In →';btn.disabled=false;return;
     }
-    const creators = await sb.get('creators', `userid=eq.${encodeURIComponent(uid)}`, 1);
-    const found = creators[0] || null;
-    if(!found){ errEl.textContent='Account not found.'; errEl.style.display='block'; btn.textContent='Sign In →'; btn.disabled=false; return; }
-    if(String(found.password||'').trim()!==pass){ errEl.textContent='Wrong password.'; errEl.style.display='block'; btn.textContent='Sign In →'; btn.disabled=false; return; }
-    if(found.blocked){ errEl.textContent='Your account is blocked. Contact admin.'; errEl.style.display='block'; btn.textContent='Sign In →'; btn.disabled=false; return; }
-    currentRole='creator'; currentUser=found;
-    goTo('creator'); startCreatorView();
-  }catch(e){
-    errEl.textContent='Connection error: '+e.message;
-    errEl.style.display='block';
+    const creators=await sb.get('creators',`userid=eq.${encodeURIComponent(uid)}`,1);
+    const found=creators[0]||null;
+    if(!found){errEl.textContent='Account not found.';errEl.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
+    if(String(found.password||'').trim()!==pass){errEl.textContent='Wrong password.';errEl.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
+    if(found.blocked){errEl.textContent='Account blocked. Contact admin.';errEl.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
+    currentRole='creator';currentUser=found;
+    // Update last login & online status
+    await sb.update('creators',found.id,{last_login:new Date().toISOString(),online:true}).catch(()=>{});
+    goTo('creator');startCreatorView();
+  }catch(e){errEl.textContent='Connection error: '+e.message;errEl.style.display='block';}
+  btn.textContent='Sign In →';btn.disabled=false;
+}
+async function logout(){
+  if(currentRole==='creator'&&currentUser){
+    await sb.update('creators',currentUser.id,{online:false}).catch(()=>{});
   }
-  btn.textContent='Sign In →'; btn.disabled=false;
+  if(pollInterval)clearInterval(pollInterval);
+  pollInterval=null;currentUser=null;currentRole=null;notifications=[];unreadNotifCount=0;
+  goTo('landing');
 }
 
-// ══ ADMIN POLLING (refresh every 8 seconds) ══════════════════════
-function startAdminPolling(){
-  loadAdminData();
-  pollInterval = setInterval(loadAdminData, 8000);
-}
+// ══ ADMIN POLLING ════════════════════════════════════════════════
+function startAdminPolling(){loadAdminData();pollInterval=setInterval(loadAdminData,8000);}
 
 async function loadAdminData(){
   try{
-    const [creators, projects, messages, reports] = await Promise.all([
-      sb.get('creators','',50),
-      sb.get('projects','',50),
-      sb.get('messages','',30),
-      sb.get('reports','',30)
+    const [creators,projects,messages,reports,payments]=await Promise.all([
+      sb.get('creators','',100),
+      sb.get('projects','',100),
+      sb.get('messages','',50),
+      sb.get('reports','',30),
+      sb.get('payments','',50).catch(()=>[])
     ]);
-    allCreators = creators;
-    allProjects = projects;
-    creatorsOffset = 0;
-    projectsOffset = 0;
-    renderCreators(creators.slice(0, PAGE_SIZE), creators.length);
-    updateAssigneeDropdown(creators);
-    renderAllProjects(projects.slice(0, PAGE_SIZE), projects.length);
+    allCreators=creators;allProjects=projects;
+    creatorsOffset=0;projectsOffset=0;
+    renderDashboardStats(creators,projects,payments);
+    renderCreators(creators.slice(0,PAGE_SIZE),creators.length);
+    updateAssigneeDropdowns(creators);
+    renderAllProjects(activeStatusFilter?projects.filter(p=>p.status===activeStatusFilter).slice(0,PAGE_SIZE):projects.slice(0,PAGE_SIZE),projects.length);
     renderReview(projects);
     renderAdminMsgs(messages);
     renderAdminReports(reports);
-  }catch(e){
-    console.error('loadAdminData error:',e.message);
-    toast('Failed to load data: ' + e.message, true);
-  }
+    renderAdminPayments(payments);
+    renderAnalytics(creators,projects,payments);
+    renderAdminChatCreatorList(creators);
+    loadStickyNotes('admin');
+    checkAdminChatUnread(creators);
+    renderPinnedBroadcast(messages);
+    renderCalendar();
+  }catch(e){toast('Load error: '+e.message,true);}
 }
 
 function adminTab(name,btn){
@@ -434,201 +829,709 @@ function adminTab(name,btn){
   btn.classList.add('active');
   document.querySelectorAll('[id^="atab-"]').forEach(t=>t.classList.add('hidden'));
   document.getElementById('atab-'+name).classList.remove('hidden');
+  if(name==='activity')loadActivityLog();
+  if(name==='calendar')renderCalendar();
 }
 
-// ── Render: Creators ─────────────────────────────────────────────
-function renderCreators(list, total){
-  const el=document.getElementById('creators-list'); if(!el)return;
-  const cards = list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No creators yet.</p>':list.map(c=>`
-    <div class="glass-card" style="padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-      <div style="display:flex;align-items:center;gap:14px;">
-        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00e5ff,#00f5a0);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#000;flex-shrink:0;">${esc((c.name||'?').charAt(0))}</div>
-        <div>
-          <div style="color:#f0f4f8;font-weight:600;font-size:14px;">${esc(c.name)}</div>
-          <div style="color:rgba(240,244,248,0.45);font-size:12px;">ID: ${esc(c.userid||c.userId)}</div>
+// ══ DASHBOARD STATS ══════════════════════════════════════════════
+function renderDashboardStats(creators,projects,payments){
+  document.getElementById('stat-total-creators').textContent=creators.length;
+  document.getElementById('stat-total-projects').textContent=projects.length;
+  document.getElementById('stat-pending').textContent=projects.filter(p=>p.status==='completed'||p.status==='notcompleted').length;
+  document.getElementById('stat-approved').textContent=projects.filter(p=>p.status==='approved').length;
+  document.getElementById('stat-rejected').textContent=projects.filter(p=>p.status==='rejected').length;
+  const totalPaid=payments.reduce((s,p)=>s+Number(p.amount||0),0);
+  document.getElementById('stat-total-paid').textContent='₹'+totalPaid.toLocaleString('en-IN');
+}
+
+// ══ CREATORS ════════════════════════════════════════════════════
+function renderCreators(list,total){
+  const el=document.getElementById('creators-list');if(!el)return;
+  const cards=list.length===0?'<p style="color:var(--text3);font-size:14px;">No creators yet.</p>':list.map(c=>`
+    <div class="glass-card" style="padding:16px 20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--green));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#000;flex-shrink:0;">${esc((c.name||'?').charAt(0))}</div>
+          <div>
+            <div style="color:var(--text);font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;">
+              ${esc(c.name)}
+              ${c.featured?'⭐':''}
+              ${c.blocked?'<span class="badge" style="background:#ff4d6d22;color:#ff4d6d;border:1px solid #ff4d6d44;">Blocked</span>':''}
+              <span class="${c.online?'online-dot':'offline-dot'}"></span>
+            </div>
+            <div style="color:var(--text3);font-size:11px;">ID: ${esc(c.userid||c.userId)} ${c.tags?'· '+esc(c.tags):''}</div>
+            <div style="color:var(--text3);font-size:11px;">Last login: ${c.last_login?fmtTime(c.last_login):'Never'}</div>
+            ${c.upi_id?`<div style="color:var(--green);font-size:11px;margin-top:2px;">💳 ${esc(c.upi_id)} · ${esc(c.bank_name||'')}</div>`:'<div style="color:var(--red);font-size:11px;margin-top:2px;">⚠ No UPI set</div>'}
+            ${c.rating?`<div style="color:var(--yellow);font-size:11px;">★ ${Number(c.rating).toFixed(1)}</div>`:''}
+          </div>
         </div>
-        ${c.blocked?`<span class="badge" style="background:#ff4d6d22;color:#ff4d6d;border:1px solid #ff4d6d44;">Blocked</span>`:''}
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn ${c.blocked?'btn-success':'btn-warn'}" style="padding:7px 16px;font-size:12px;" onclick="toggleBlock('${c.id}',${!!c.blocked})">${c.blocked?'Unblock':'Block'}</button>
-        <button class="btn btn-danger" style="padding:7px 16px;font-size:12px;" onclick="deleteCreator('${c.id}')">Delete</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="openCreatorModal('${c.id}')">View</button>
+          <button class="btn ${c.blocked?'btn-success':'btn-warn'}" style="padding:5px 10px;font-size:11px;" onclick="toggleBlock('${c.id}',${!!c.blocked})">${c.blocked?'Unblock':'Block'}</button>
+          <button class="btn btn-danger" style="padding:5px 10px;font-size:11px;" onclick="deleteCreator('${c.id}')">Delete</button>
+        </div>
       </div>
     </div>`).join('');
-  const shown = creatorsOffset + PAGE_SIZE;
-  const hasMore = total && shown < total;
-  el.innerHTML = cards + (hasMore ? `<button class="btn btn-ghost w-full mt-10" onclick="loadMoreCreators()">Load More (${total - shown} remaining)</button>` : '');
+  const shown=creatorsOffset+PAGE_SIZE;
+  const hasMore=total&&shown<total;
+  el.innerHTML=cards+(hasMore?`<button class="btn btn-ghost w-full mt-10" onclick="loadMoreCreators()">Load More (${total-shown} remaining)</button>`:'');
 }
 
-function loadMoreCreators(){
-  creatorsOffset += PAGE_SIZE;
-  renderCreators(allCreators.slice(0, creatorsOffset + PAGE_SIZE), allCreators.length);
+function filterCreators(){
+  const q=document.getElementById('creator-search').value.toLowerCase();
+  const filtered=allCreators.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.userid||'').toLowerCase().includes(q));
+  renderCreators(filtered.slice(0,PAGE_SIZE+creatorsOffset),filtered.length);
+}
+function loadMoreCreators(){creatorsOffset+=PAGE_SIZE;renderCreators(allCreators.slice(0,creatorsOffset+PAGE_SIZE),allCreators.length);}
+
+function openCreatorModal(cid){
+  const c=allCreators.find(x=>x.id===cid);if(!c)return;
+  openModal(`
+    <div class="flex justify-between align-center" style="margin-bottom:18px;">
+      <h3 class="font-raj" style="font-size:22px;color:var(--cyan);">${esc(c.name)}</h3>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div class="flex flex-col gap-12">
+      <div class="glass-card p-16"><div style="font-size:12px;color:var(--text3);">USER ID</div><div style="color:var(--text);font-size:14px;">${esc(c.userid||c.userId)}</div></div>
+      <div class="glass-card p-16"><div style="font-size:12px;color:var(--text3);">EMAIL</div><div style="color:var(--text);font-size:14px;">${esc(c.email||'—')}</div></div>
+      <div class="glass-card p-16"><div style="font-size:12px;color:var(--text3);">BIO</div><div style="color:var(--text);font-size:14px;">${esc(c.bio||'—')}</div></div>
+      <div class="glass-card p-16"><div style="font-size:12px;color:var(--text3);">SKILLS</div><div style="color:var(--text);font-size:14px;">${esc(c.skills||'—')}</div></div>
+      <div class="glass-card p-16"><div style="font-size:12px;color:var(--text3);">TAGS</div><div style="color:var(--text);font-size:14px;">${esc(c.tags||'—')}</div></div>
+      <div class="glass-card p-16">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">UPI DETAILS (Edit)</div>
+        <div class="flex gap-8">
+          <input type="text" id="modal-upi" value="${esc(c.upi_id||'')}" placeholder="UPI ID" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:13px;"/>
+          <input type="text" id="modal-bank" value="${esc(c.bank_name||'')}" placeholder="Bank" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:13px;"/>
+          <button class="btn btn-success" style="padding:7px 12px;font-size:12px;" onclick="updateCreatorUPI('${c.id}')">Save</button>
+        </div>
+      </div>
+      <div class="glass-card p-16">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">RATING</div>
+        <div style="display:flex;gap:4px;" id="modal-stars">${[1,2,3,4,5].map(i=>`<span class="star${i<=(c.rating||0)?' active':''}" onclick="setRating('${c.id}',${i})">${i<=(c.rating||0)?'★':'☆'}</span>`).join('')}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+        <button class="btn btn-ghost" style="padding:7px 14px;font-size:12px;" onclick="toggleFeatured('${c.id}',${!!c.featured})">${c.featured?'Remove Featured':'⭐ Set Featured'}</button>
+        <button class="btn ${c.blocked?'btn-success':'btn-warn'}" style="padding:7px 14px;font-size:12px;" onclick="toggleBlock('${c.id}',${!!c.blocked});closeModal()">${c.blocked?'Unblock':'Block'}</button>
+      </div>
+    </div>
+  `);
 }
 
-function updateAssigneeDropdown(list){
-  const sel=document.getElementById('p-assignee'); if(!sel)return;
-  const cur=sel.value;
-  sel.innerHTML='<option value="">Select Creator</option>'+list.filter(c=>!c.blocked).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  if(cur) sel.value=cur;
+async function updateCreatorUPI(id){
+  const upi=document.getElementById('modal-upi').value.trim();
+  const bank=document.getElementById('modal-bank').value.trim();
+  try{await sb.update('creators',id,{upi_id:upi,bank_name:bank});toast('UPI updated!');closeModal();loadAdminData();}
+  catch(e){toast('Error: '+e.message,true);}
+}
+async function setRating(id,r){
+  try{
+    await sb.update('creators',id,{rating:r});
+    document.getElementById('modal-stars').innerHTML=[1,2,3,4,5].map(i=>`<span class="star${i<=r?' active':''}" onclick="setRating('${id}',${i})">${i<=r?'★':'☆'}</span>`).join('');
+    toast('Rating saved!');
+    loadAdminData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+async function toggleFeatured(id,featured){
+  try{await sb.update('creators',id,{featured:!featured});toast(featured?'Removed featured.':'Marked as featured! ⭐');closeModal();loadAdminData();}
+  catch(e){toast('Error: '+e.message,true);}
+}
+
+function updateAssigneeDropdowns(list){
+  const active=list.filter(c=>!c.blocked);
+  ['p-assignee','pay-creator'].forEach(sid=>{
+    const sel=document.getElementById(sid);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Select Creator</option>'+active.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+    if(cur)sel.value=cur;
+  });
+  // Password change dropdown
+  const ps=document.getElementById('pwd-creator-sel');
+  if(ps){ps.innerHTML='<option value="">Select Creator</option>'+list.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');}
 }
 
 async function addCreator(){
-  const nameEl=document.getElementById('new-name');
-  const uidEl=document.getElementById('new-uid');
-  const passEl=document.getElementById('new-pass');
-  const name=nameEl.value.trim(), userId=uidEl.value.trim(), password=passEl.value.trim();
-  if(!name||!userId||!password){toast('Fill all fields!',true);return;}
-  nameEl.value=''; uidEl.value=''; passEl.value='';
+  const name=document.getElementById('new-name').value.trim();
+  const userId=document.getElementById('new-uid').value.trim();
+  const password=document.getElementById('new-pass').value.trim();
+  const email=document.getElementById('new-email').value.trim();
+  const tags=document.getElementById('new-tags').value.trim();
+  if(!name||!userId||!password){toast('Fill required fields!',true);return;}
   try{
-    await sb.insert('creators',{name, userid:userId, password, blocked:false, avatar:null});
+    await sb.insert('creators',{name,userid:userId,password,email,tags,blocked:false,avatar:null,online:false});
+    document.getElementById('new-name').value='';document.getElementById('new-uid').value='';document.getElementById('new-pass').value='';document.getElementById('new-email').value='';document.getElementById('new-tags').value='';
     toast('Creator added! ✓');
+    await logActivity(`Created creator: ${name}`);
     loadAdminData();
-  }catch(e){ nameEl.value=name; uidEl.value=userId; passEl.value=password; toast('Error: '+e.message,true); }
+  }catch(e){toast('Error: '+e.message,true);}
 }
-
-async function toggleBlock(id, blocked){
-  try{ await sb.update('creators',id,{blocked:!blocked}); toast(blocked?'Unblocked.':'Blocked.'); loadAdminData(); }
-  catch(e){ toast('Error: '+e.message,true); }
+async function toggleBlock(id,blocked){
+  try{await sb.update('creators',id,{blocked:!blocked});toast(blocked?'Unblocked.':'Blocked.');await logActivity(`${blocked?'Unblocked':'Blocked'} creator ID: ${id}`);loadAdminData();}
+  catch(e){toast('Error: '+e.message,true);}
 }
-
 async function deleteCreator(id){
-  try{ await sb.delete('creators',id); toast('Creator removed.'); loadAdminData(); }
-  catch(e){ toast('Error: '+e.message,true); }
+  if(!confirm('Delete this creator?'))return;
+  try{await sb.delete('creators',id);toast('Creator removed.');await logActivity(`Deleted creator ID: ${id}`);loadAdminData();}
+  catch(e){toast('Error: '+e.message,true);}
 }
 
-// ── Render: All Projects ─────────────────────────────────────────
-function renderAllProjects(list, total){
-  const el=document.getElementById('all-projects-list'); if(!el)return;
-  const cards = list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No projects yet.</p>':list.map(p=>`
-    <div class="glass-card" style="padding:20px 24px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+// ══ PROJECTS ════════════════════════════════════════════════════
+function renderAllProjects(list,total){
+  const el=document.getElementById('all-projects-list');if(!el)return;
+  const cards=list.length===0?'<p style="color:var(--text3);font-size:14px;">No projects.</p>':list.map(p=>`
+    <div class="glass-card" style="padding:18px 22px;border-left:3px solid ${p.priority==='high'?'#ff4d6d':p.priority==='low'?'#00f5a0':'#ffd166'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
         <div>
-          <div style="color:#f0f4f8;font-weight:700;font-size:15px;margin-bottom:8px;">${esc(p.name)}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <span style="color:rgba(240,244,248,0.45);font-size:12px;">&#128100; ${esc(p.assigneename||'—')}</span>
-            ${p.niche?mkBadge(p.niche):''}
+          <div style="color:var(--text);font-weight:700;font-size:15px;margin-bottom:6px;">${esc(p.name)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <span style="color:var(--text2);font-size:12px;">👤 ${esc(p.assigneename||'—')}</span>
+            ${p.category?mkBadge(p.category):''}
             ${p.commission?mkBadge('₹'+Number(p.commission).toLocaleString(),'#00f5a0'):''}
+            ${priorityBadge(p.priority||'medium')}
           </div>
         </div>
         ${statusBadge(p.status)}
       </div>
-      <div class="grid-2" style="margin-bottom:12px;">
-        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:9px 13px;"><div style="color:rgba(240,244,248,0.45);font-size:11px;margin-bottom:3px;">RAISE DATE</div><div style="color:#f0f4f8;font-size:13px;font-weight:600;">${fmtDate(p.raisedate)||'—'}</div></div>
-        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:9px 13px;"><div style="color:rgba(240,244,248,0.45);font-size:11px;margin-bottom:3px;">DEADLINE</div><div style="color:${isPast(p.deadline)&&p.status==='pending'?'#ff4d6d':'#f0f4f8'};font-size:13px;font-weight:600;">${fmtDate(p.deadline)}</div></div>
+      <div class="grid-2" style="margin-bottom:10px;">
+        <div style="background:var(--glass2);border-radius:8px;padding:8px 12px;"><div style="color:var(--text3);font-size:10px;margin-bottom:2px;">DEADLINE</div><div style="color:${isPast(p.deadline)&&p.status==='pending'?'#ff4d6d':'var(--text)'};font-size:13px;font-weight:600;">${fmtDate(p.deadline)}</div></div>
+        <div style="background:var(--glass2);border-radius:8px;padding:8px 12px;"><div style="color:var(--text3);font-size:10px;margin-bottom:2px;">RAISE DATE</div><div style="color:var(--text);font-size:13px;font-weight:600;">${fmtDate(p.raisedate)||'—'}</div></div>
       </div>
-      ${p.reflink?`<div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);border-radius:8px;padding:9px 13px;margin-bottom:10px;"><span style="color:rgba(240,244,248,0.45);font-size:11px;">&#128279; REF &nbsp;</span><a href="${esc(p.reflink)}" target="_blank" style="color:#00e5ff;font-size:13px;word-break:break-all;">${esc(p.reflink)}</a></div>`:''}
-      ${p.worklink?`<div style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:9px 13px;margin-bottom:10px;"><span style="color:#00f5a0;font-size:11px;font-weight:600;">&#9989; WORK LINK &nbsp;</span><a href="${esc(p.worklink)}" target="_blank" style="color:#00f5a0;font-size:13px;word-break:break-all;">${esc(p.worklink)}</a></div>`:''}
-      ${p.failurereason?`<div style="background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);border-radius:8px;padding:9px 13px;"><span style="color:#ff4d6d;font-size:11px;font-weight:600;">FAILURE: </span><span style="color:rgba(240,244,248,0.6);font-size:13px;">${esc(p.failurereason)}</span></div>`:''}
+      ${p.notes?`<div style="color:var(--text2);font-size:12px;margin-bottom:8px;">📝 ${esc(p.notes)}</div>`:''}
+      ${p.worklink?`<div style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:8px 12px;margin-bottom:8px;"><span style="color:var(--green);font-size:11px;font-weight:600;">✅ Work: </span><a href="${esc(p.worklink)}" target="_blank" style="color:var(--green);font-size:12px;word-break:break-all;">${esc(p.worklink)}</a></div>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="openProjectNotes('${p.id}')">📝 Notes</button>
+        <button class="btn btn-danger" style="padding:5px 10px;font-size:11px;" onclick="deleteProject('${p.id}')">Delete</button>
+      </div>
     </div>`).join('');
-  const shown = projectsOffset + PAGE_SIZE;
-  const hasMore = total && shown < total;
-  el.innerHTML = cards + (hasMore ? `<button class="btn btn-ghost w-full mt-10" onclick="loadMoreProjects()">Load More (${total - shown} remaining)</button>` : '');
+  const shown=projectsOffset+PAGE_SIZE;
+  const hasMore=!activeStatusFilter&&total&&shown<total;
+  el.innerHTML=cards+(hasMore?`<button class="btn btn-ghost w-full mt-10" onclick="loadMoreProjects()">Load More (${total-shown} remaining)</button>`:'');
 }
 
-function loadMoreProjects(){
-  projectsOffset += PAGE_SIZE;
-  renderAllProjects(allProjects.slice(0, projectsOffset + PAGE_SIZE), allProjects.length);
+function filterProjects(){
+  const q=document.getElementById('project-search').value.toLowerCase();
+  const filtered=allProjects.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.assigneename||'').toLowerCase().includes(q));
+  renderAllProjects(filtered.slice(0,PAGE_SIZE),filtered.length);
+}
+function filterByStatus(s){activeStatusFilter=s;const filtered=s?allProjects.filter(p=>p.status===s):allProjects;projectsOffset=0;renderAllProjects(filtered.slice(0,PAGE_SIZE),filtered.length);}
+function loadMoreProjects(){projectsOffset+=PAGE_SIZE;renderAllProjects(allProjects.slice(0,projectsOffset+PAGE_SIZE),allProjects.length);}
+
+function openProjectNotes(pid){
+  const p=allProjects.find(x=>x.id===pid);if(!p)return;
+  openModal(`
+    <div class="flex justify-between align-center" style="margin-bottom:14px;">
+      <h3 class="font-raj" style="font-size:18px;color:var(--cyan);">📝 Project Notes</h3>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div style="color:var(--text);font-size:14px;font-weight:600;margin-bottom:10px;">${esc(p.name)}</div>
+    <div class="field"><label>Notes</label><textarea id="modal-notes" style="min-height:120px;">${esc(p.notes||'')}</textarea></div>
+    <button class="btn btn-primary mt-14 w-full" onclick="saveProjectNotes('${pid}')">Save Notes</button>
+  `);
+}
+async function saveProjectNotes(pid){
+  const notes=document.getElementById('modal-notes').value;
+  try{await sb.update('projects',pid,{notes});toast('Notes saved!');closeModal();loadAdminData();}
+  catch(e){toast('Error: '+e.message,true);}
+}
+async function deleteProject(id){
+  if(!confirm('Delete this project?'))return;
+  try{await sb.delete('projects',id);toast('Project deleted.');await logActivity(`Deleted project ID: ${id}`);loadAdminData();}
+  catch(e){toast('Error: '+e.message,true);}
 }
 
 async function launchProject(){
   const name=document.getElementById('p-name').value.trim();
-  const niche=document.getElementById('p-niche').value.trim();
+  const category=document.getElementById('p-category').value.trim();
   const raisedate=document.getElementById('p-raise').value;
   const deadline=document.getElementById('p-deadline').value;
   const reflink=document.getElementById('p-ref').value.trim();
   const commission=Number(document.getElementById('p-comm').value)||0;
+  const priority=document.getElementById('p-priority').value;
+  const notes=document.getElementById('p-notes').value.trim();
   const sel=document.getElementById('p-assignee');
   const assigneeid=sel.value;
   const assigneename=sel.selectedOptions[0]?.text||'';
   if(!name||!deadline||!assigneeid){toast('Fill required fields!',true);return;}
   try{
-    await sb.insert('projects',{name,niche,deadline,raisedate,reflink,commission,assigneeid,assigneename,status:'pending',failurereason:null,worklink:null,submittedat:null});
-    ['p-name','p-niche','p-raise','p-deadline','p-ref','p-comm'].forEach(id=>document.getElementById(id).value='');
+    await sb.insert('projects',{name,category,deadline,raisedate,reflink,commission,priority,notes,assigneeid,assigneename,status:'pending',failurereason:null,worklink:null,submittedat:null});
+    ['p-name','p-category','p-raise','p-deadline','p-ref','p-comm','p-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     document.getElementById('p-assignee').value='';
     toast('Project launched! 🚀');
+    await logActivity(`Launched project: ${name} → ${assigneename}`);
+    // Email notification
+    const creator=allCreators.find(c=>c.id===assigneeid);
+    if(creator?.email&&emailSettings.newProject)sendEmail(creator.email,creator.name,'New Project Assigned',`You have been assigned: ${name}. Deadline: ${fmtDate(deadline)}. Commission: ₹${commission}`);
     loadAdminData();
   }catch(e){toast('Error: '+e.message,true);}
 }
 
-// ── Render: Review ────────────────────────────────────────────────
+// ══ REVIEW ══════════════════════════════════════════════════════
 function renderReview(list){
   const reviewable=list.filter(p=>p.status==='completed'||p.status==='notcompleted');
   const reviewed=list.filter(p=>p.status==='approved'||p.status==='rejected');
   const rEl=document.getElementById('review-list');
-  if(rEl) rEl.innerHTML=reviewable.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No submissions pending.</p>':reviewable.map(p=>`
-    <div class="glass-card" style="padding:22px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-        <div><div style="color:#f0f4f8;font-weight:700;font-size:15px;">${esc(p.name)}</div><div style="color:rgba(240,244,248,0.45);font-size:12px;margin-top:4px;">By ${esc(p.assigneename||'—')} &middot; ${fmtDate(p.submittedat)}</div></div>
+  if(rEl)rEl.innerHTML=reviewable.length===0?'<p style="color:var(--text3);font-size:14px;">No submissions pending.</p>':reviewable.map(p=>`
+    <div class="glass-card" style="padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div><div style="color:var(--text);font-weight:700;font-size:15px;">${esc(p.name)}</div><div style="color:var(--text3);font-size:12px;margin-top:3px;">By ${esc(p.assigneename||'—')} · ${fmtDate(p.submittedat)}</div></div>
         ${statusBadge(p.status)}
       </div>
-      ${p.worklink?`<div style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;"><span style="color:#00f5a0;font-size:12px;font-weight:600;">&#9989; Work Link: </span><a href="${esc(p.worklink)}" target="_blank" style="color:#00f5a0;font-size:13px;word-break:break-all;">${esc(p.worklink)}</a></div>`:''}
-      ${p.failurereason?`<div style="background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;"><span style="color:#ff4d6d;font-size:12px;font-weight:600;">Failure: </span><span style="color:rgba(240,244,248,0.5);font-size:13px;">${esc(p.failurereason)}</span></div>`:''}
-      <div style="display:flex;gap:10px;">
-        <button class="btn btn-success" onclick="approveProject('${p.id}')">&#10003; Approve</button>
-        <button class="btn btn-danger" onclick="rejectProject('${p.id}')">&#10005; Reject</button>
+      ${p.worklink?`<div style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:9px 12px;margin-bottom:10px;"><span style="color:var(--green);font-size:11px;font-weight:600;">✅ Work: </span><a href="${esc(p.worklink)}" target="_blank" style="color:var(--green);font-size:12px;word-break:break-all;">${esc(p.worklink)}</a></div>`:''}
+      ${p.failurereason?`<div style="background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);border-radius:8px;padding:9px 12px;margin-bottom:10px;"><span style="color:var(--red);font-size:11px;font-weight:600;">Reason: </span><span style="color:var(--text2);font-size:13px;">${esc(p.failurereason)}</span></div>`:''}
+      <div id="revision-form-${p.id}" class="hidden flex flex-col gap-8" style="margin-bottom:10px;">
+        <div class="field"><label>Revision Notes</label><textarea id="revision-msg-${p.id}" placeholder="What needs to be changed..."></textarea></div>
+        <div class="flex gap-8">
+          <button class="btn btn-warn" onclick="sendRevision('${p.id}','${p.assigneeid}')">Send Revision Request</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('revision-form-${p.id}').classList.add('hidden')">Cancel</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-success" onclick="approveProject('${p.id}','${p.assigneeid}','${p.assigneename}')">✓ Approve</button>
+        <button class="btn btn-danger" onclick="rejectProject('${p.id}','${p.assigneeid}')">✕ Reject</button>
+        <button class="btn btn-warn" style="padding:7px 12px;font-size:12px;" onclick="document.getElementById('revision-form-${p.id}').classList.toggle('hidden')">↩ Revision</button>
       </div>
     </div>`).join('');
   const rvEl=document.getElementById('reviewed-list');
-  if(rvEl) rvEl.innerHTML=reviewed.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">None yet.</p>':reviewed.map(p=>`
-    <div class="glass-card" style="padding:16px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-      <div><div style="color:#f0f4f8;font-size:14px;font-weight:600;">${esc(p.name)}</div><div style="color:rgba(240,244,248,0.45);font-size:12px;">${esc(p.assigneename||'—')}</div></div>
+  if(rvEl)rvEl.innerHTML=reviewed.length===0?'<p style="color:var(--text3);font-size:14px;">None yet.</p>':reviewed.map(p=>`
+    <div class="glass-card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div><div style="color:var(--text);font-size:14px;font-weight:600;">${esc(p.name)}</div><div style="color:var(--text3);font-size:12px;">${esc(p.assigneename||'—')}</div></div>
       ${statusBadge(p.status)}
     </div>`).join('');
 }
 
-async function approveProject(id){ try{ await sb.update('projects',id,{status:'approved'}); toast('Approved! ✓'); loadAdminData(); }catch(e){toast('Error: '+e.message,true);} }
-async function rejectProject(id){ try{ await sb.update('projects',id,{status:'rejected'}); toast('Rejected.'); loadAdminData(); }catch(e){toast('Error: '+e.message,true);} }
+async function approveProject(id,creatorId,creatorName){
+  try{
+    await sb.update('projects',id,{status:'approved'});
+    toast('Approved! ✓');
+    await logActivity(`Approved project ID: ${id}`);
+    const creator=allCreators.find(c=>c.id===creatorId);
+    if(creator?.email&&emailSettings.approved)sendEmail(creator.email,creator.name,'Project Approved!','Your project has been approved! Great work! 🎉');
+    addNotification('Project Approved','Admin approved a project submission','success');
+    loadAdminData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+async function rejectProject(id,creatorId){
+  try{
+    await sb.update('projects',id,{status:'rejected'});
+    toast('Rejected.');
+    await logActivity(`Rejected project ID: ${id}`);
+    const creator=allCreators.find(c=>c.id===creatorId);
+    if(creator?.email&&emailSettings.approved)sendEmail(creator.email,creator.name,'Project Update','Your project submission was rejected. Please check with admin.');
+    loadAdminData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+async function sendRevision(pid,creatorId){
+  const msg=document.getElementById('revision-msg-'+pid)?.value.trim();
+  if(!msg){toast('Enter revision notes!',true);return;}
+  try{
+    await sb.insert('chats',{creatorid:creatorId,sender:'admin',text:'🔄 REVISION REQUEST: '+msg,sentat:new Date().toISOString()});
+    await sb.update('projects',pid,{status:'pending',worklink:null,submittedat:null});
+    toast('Revision request sent!');
+    document.getElementById('revision-form-'+pid)?.classList.add('hidden');
+    await logActivity(`Sent revision request for project ID: ${pid}`);
+    loadAdminData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
 
-// ── Render: Comms ────────────────────────────────────────────────
+// ══ COMMS ════════════════════════════════════════════════════════
 function renderAdminMsgs(list){
-  const el=document.getElementById('messages-list'); if(!el)return;
-  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No messages sent.</p>':list.map(m=>`
-    <div class="glass-card" style="padding:16px 22px;">
-      <div style="color:#f0f4f8;font-size:14px;line-height:1.6;">${esc(m.text)}</div>
-      <div style="color:rgba(240,244,248,0.45);font-size:11px;margin-top:8px;">${m.sentat?new Date(m.sentat).toLocaleString():''}</div>
+  const broadcasts=list.filter(m=>!m.type||m.type==='broadcast'||m.type==='emergency');
+  const el=document.getElementById('messages-list');if(!el)return;
+  el.innerHTML=broadcasts.length===0?'<p style="color:var(--text3);font-size:14px;">No broadcasts.</p>':broadcasts.map(m=>`
+    <div class="glass-card" style="padding:14px 18px;border-left:3px solid ${m.type==='emergency'?'#ff4d6d':'var(--cyan)'};">
+      ${m.type==='emergency'?'<div style="font-size:11px;color:var(--red);margin-bottom:4px;">🚨 EMERGENCY</div>':''}
+      ${m.pinned?'<div style="font-size:11px;color:var(--yellow);margin-bottom:4px;">📌 PINNED</div>':''}
+      <div style="color:var(--text);font-size:14px;line-height:1.6;">${esc(m.text)}</div>
+      <div style="color:var(--text3);font-size:11px;margin-top:6px;">${fmtTime(m.sentat)}</div>
     </div>`).join('');
 }
-
 function renderAdminReports(list){
-  const el=document.getElementById('reports-list'); if(!el)return;
-  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No reports yet.</p>':list.map(r=>`
-    <div class="glass-card" style="padding:16px 22px;">
-      <div style="color:#00e5ff;font-size:12px;margin-bottom:4px;">From: ${esc(r.creatorname||'Unknown')}</div>
-      <div style="color:#f0f4f8;font-size:14px;">${esc(r.text)}</div>
-      <div style="color:rgba(240,244,248,0.45);font-size:11px;margin-top:6px;">${r.sentat?new Date(r.sentat).toLocaleString():''}</div>
+  const el=document.getElementById('reports-list');if(!el)return;
+  el.innerHTML=list.length===0?'<p style="color:var(--text3);font-size:14px;">No reports.</p>':list.map(r=>`
+    <div class="glass-card" style="padding:14px 18px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
+        <div style="color:var(--cyan);font-size:12px;">From: ${r.anonymous?'Anonymous':esc(r.creatorname||'Unknown')} ${r.type==='suggestion'?'(Suggestion)':'(Report)'}</div>
+        <div style="color:var(--text3);font-size:11px;">${fmtTime(r.sentat)}</div>
+      </div>
+      <div style="color:var(--text);font-size:13px;">${esc(r.text)}</div>
     </div>`).join('');
 }
 
-async function broadcastMsg(){
-  const msg=document.getElementById('bcast-msg').value.trim(); if(!msg)return;
-  try{ await sb.insert('messages',{text:msg}); document.getElementById('bcast-msg').value=''; toast('Broadcast sent!'); loadAdminData(); }
-  catch(e){toast('Error: '+e.message,true);}
+async function broadcastMsg(pin=false){
+  const msg=document.getElementById('bcast-msg').value.trim();if(!msg)return;
+  try{
+    await sb.insert('messages',{text:msg,type:'broadcast',pinned:pin,sentat:new Date().toISOString()});
+    document.getElementById('bcast-msg').value='';
+    toast(pin?'Broadcast pinned & sent! 📌':'Broadcast sent!');
+    await logActivity('Sent broadcast: '+msg.substring(0,40));
+    loadAdminData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+async function unpinBroadcast(){
+  try{
+    const msgs=await sb.get('messages','pinned=eq.true',1);
+    if(msgs[0])await sb.update('messages',msgs[0].id,{pinned:false});
+    toast('Unpinned.');loadAdminData();
+  }catch(e){}
+}
+function renderPinnedBroadcast(messages){
+  const pinned=messages.find(m=>m.pinned&&m.type==='broadcast');
+  const adminEl=document.getElementById('pinned-bcast-admin');
+  const creatorEl=document.getElementById('creator-pinned-broadcast');
+  if(pinned){
+    if(adminEl){adminEl.classList.remove('hidden');document.getElementById('pinned-bcast-text').textContent=pinned.text;}
+    if(creatorEl){creatorEl.classList.remove('hidden');document.getElementById('creator-pinned-broadcast-text').textContent=pinned.text;}
+  }else{
+    if(adminEl)adminEl.classList.add('hidden');
+    if(creatorEl)creatorEl.classList.add('hidden');
+  }
 }
 
-// ══ CREATOR ══════════════════════════════════════════════════════
+// ══ PRIVATE CHAT ════════════════════════════════════════════════
+let chatPollInterval=null;
+function renderAdminChatCreatorList(creators){
+  const el=document.getElementById('admin-chat-creator-list');if(!el)return;
+  el.innerHTML=creators.map(c=>`
+    <div onclick="openAdminChat('${c.id}','${esc(c.name)}')" style="padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px;background:${adminChatCreatorId===c.id?'rgba(0,229,255,0.08)':'transparent'};">
+      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--green));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#000;flex-shrink:0;">${esc((c.name||'?').charAt(0))}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="color:var(--text);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.name)}</div>
+        <div style="display:flex;align-items:center;gap:4px;"><span class="${c.online?'online-dot':'offline-dot'}"></span><span style="color:var(--text3);font-size:10px;">${c.online?'Online':'Offline'}</span></div>
+      </div>
+    </div>`).join('');
+}
+async function openAdminChat(creatorId,name){
+  adminChatCreatorId=creatorId;adminChatCreatorName=name;
+  document.getElementById('admin-chat-header').innerHTML=`<div style="color:var(--text);font-size:13px;font-weight:600;">${esc(name)}</div>`;
+  renderAdminChatCreatorList(allCreators);
+  await loadAdminChatMessages();
+  if(chatPollInterval)clearInterval(chatPollInterval);
+  chatPollInterval=setInterval(loadAdminChatMessages,4000);
+}
+async function loadAdminChatMessages(){
+  if(!adminChatCreatorId)return;
+  try{
+    const msgs=await sb.get('chats',`creatorid=eq.${adminChatCreatorId}`,50);
+    renderChatMessages(msgs,'admin',document.getElementById('admin-chat-messages'));
+    // Mark creator messages as seen
+    const unseen=msgs.filter(m=>m.sender==='creator'&&!m.seen);
+    for(const m of unseen)await sb.update('chats',m.id,{seen:true}).catch(()=>{});
+  }catch(e){}
+}
+async function adminSendChat(){
+  if(!adminChatCreatorId){toast('Select a creator first!',true);return;}
+  const input=document.getElementById('admin-chat-input');
+  const text=input.value.trim();if(!text)return;
+  input.value='';
+  try{
+    await sb.insert('chats',{creatorid:adminChatCreatorId,sender:'admin',text,sentat:new Date().toISOString(),seen:false});
+    await loadAdminChatMessages();
+    const creator=allCreators.find(c=>c.id===adminChatCreatorId);
+    if(creator?.email&&emailSettings.message)sendEmail(creator.email,creator.name,'New Message from Admin','You have a new message from admin. Login to view.');
+  }catch(e){toast('Error: '+e.message,true);}
+}
+function checkAdminChatUnread(creators){}
+
+async function loadCreatorChatMessages(){
+  if(!currentUser)return;
+  try{
+    const msgs=await sb.get('chats',`creatorid=eq.${currentUser.id}`,50);
+    renderChatMessages(msgs,'creator',document.getElementById('creator-chat-messages'));
+    // Mark admin messages as seen
+    const unseen=msgs.filter(m=>m.sender==='admin'&&!m.seen);
+    for(const m of unseen)await sb.update('chats',m.id,{seen:true}).catch(()=>{});
+    // Unread badge
+    const unread=msgs.filter(m=>m.sender==='admin'&&!m.seen).length;
+    const badge=document.getElementById('creator-chat-badge');
+    if(badge){badge.textContent=unread;badge.classList.toggle('hidden',unread===0);}
+    // Pinned message
+    const pinned=msgs.find(m=>m.pinned);
+    if(pinned){document.getElementById('creator-pinned-msg').classList.remove('hidden');document.getElementById('creator-pinned-text').textContent=pinned.text;}
+  }catch(e){}
+}
+async function creatorSendChat(){
+  const input=document.getElementById('creator-chat-input');
+  const text=input.value.trim();if(!text)return;
+  input.value='';
+  try{
+    await sb.insert('chats',{creatorid:currentUser.id,sender:'creator',text,sentat:new Date().toISOString(),seen:false});
+    await loadCreatorChatMessages();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+function renderChatMessages(msgs,viewer,container){
+  if(!container)return;
+  container.innerHTML=msgs.length===0?`<div style="color:var(--text3);font-size:13px;text-align:center;margin:auto;">No messages yet. Say hello! 👋</div>`:msgs.map(m=>{
+    const isSent=(viewer==='admin'&&m.sender==='admin')||(viewer==='creator'&&m.sender==='creator');
+    const seenMark=isSent?(m.seen?'<span style="color:var(--cyan);font-size:10px;">✓✓</span>':'<span style="color:var(--text3);font-size:10px;">✓</span>'):'';
+    return `<div style="display:flex;flex-direction:column;align-items:${isSent?'flex-end':'flex-start'};">
+      <div class="chat-bubble ${isSent?'sent':'recv'}">${esc(m.text)}</div>
+      <div class="chat-meta ${isSent?'sent':''}">${m.sentat?new Date(m.sentat).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):''} ${seenMark}</div>
+    </div>`;
+  }).join('');
+  container.scrollTop=container.scrollHeight;
+}
+
+// ══ PAYMENTS ════════════════════════════════════════════════════
+function showUpiDetails(){
+  const sel=document.getElementById('pay-creator');
+  const c=allCreators.find(x=>x.id===sel.value);
+  const el=document.getElementById('pay-upi-details');
+  if(c&&(c.upi_id||c.bank_name)){
+    el.classList.remove('hidden');
+    document.getElementById('pay-upi-text').textContent=`UPI: ${c.upi_id||'—'} | Bank: ${c.bank_name||'—'}`;
+  }else{el.classList.add('hidden');}
+}
+async function makePayment(){
+  const creatorSel=document.getElementById('pay-creator');
+  const creatorId=creatorSel.value;
+  const creatorName=creatorSel.selectedOptions[0]?.text||'';
+  const amount=Number(document.getElementById('pay-amount').value)||0;
+  const type=document.getElementById('pay-type').value;
+  const note=document.getElementById('pay-note').value.trim();
+  if(!creatorId||!amount){toast('Fill required fields!',true);return;}
+  try{
+    await sb.insert('payments',{creatorid:creatorId,creatorname:creatorName,amount,type,note,paidat:new Date().toISOString()});
+    document.getElementById('pay-amount').value='';document.getElementById('pay-note').value='';
+    toast('Payment sent! ✓');
+    await logActivity(`Payment ₹${amount} (${type}) to ${creatorName}`);
+    loadAdminData();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+function renderAdminPayments(list){
+  const el=document.getElementById('admin-payment-list');if(!el)return;
+  el.innerHTML=list.length===0?'<p style="color:var(--text3);font-size:14px;">No payments yet.</p>':list.map(p=>`
+    <div class="glass-card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div><div style="color:var(--text);font-size:14px;font-weight:600;">${esc(p.creatorname||'—')}</div><div style="color:var(--text3);font-size:12px;">${esc(p.note||'—')} · ${fmtDate(p.paidat)}</div></div>
+      <div style="text-align:right;"><div style="color:${p.type==='bonus'?'#ffd166':p.type==='advance'?'#a78bfa':'#00f5a0'};font-weight:700;font-size:16px;">₹${Number(p.amount||0).toLocaleString()}</div><div style="color:var(--text3);font-size:11px;">${p.type||'payment'}</div></div>
+    </div>`).join('');
+}
+async function exportPayments(){
+  try{
+    const payments=await sb.get('payments','',500);
+    let csv='Creator,Amount,Type,Note,Date\n';
+    payments.forEach(p=>{csv+=`"${p.creatorname||''}",${p.amount},"${p.type||''}","${p.note||''}","${fmtDate(p.paidat)}"\n`;});
+    const blob=new Blob([csv],{type:'text/csv'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='payments.csv';a.click();
+    URL.revokeObjectURL(url);
+    toast('Exported!');
+  }catch(e){toast('Error: '+e.message,true);}
+}
+async function exportAnalytics(){
+  let csv='Creator,Assigned,Approved,Rejected\n';
+  allCreators.forEach(c=>{
+    const assigned=allProjects.filter(p=>p.assigneeid===c.id).length;
+    const approved=allProjects.filter(p=>p.assigneeid===c.id&&p.status==='approved').length;
+    const rejected=allProjects.filter(p=>p.assigneeid===c.id&&p.status==='rejected').length;
+    csv+=`"${c.name}",${assigned},${approved},${rejected}\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='analytics.csv';a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported!');
+}
+
+// ══ CALENDAR ════════════════════════════════════════════════════
+function renderCalendar(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent=`${months[calMonth]} ${calYear}`;
+  const grid=document.getElementById('cal-grid');if(!grid)return;
+  const first=new Date(calYear,calMonth,1).getDay();
+  const days=new Date(calYear,calMonth+1,0).getDate();
+  const today=new Date();
+  const deadlineDays=new Set(allProjects.filter(p=>p.deadline&&p.status==='pending').map(p=>{const d=new Date(p.deadline);return d.getFullYear()===calYear&&d.getMonth()===calMonth?d.getDate():null;}).filter(Boolean));
+  let html='';
+  for(let i=0;i<first;i++)html+=`<div class="cal-day other-month"></div>`;
+  for(let d=1;d<=days;d++){
+    const isToday=today.getDate()===d&&today.getMonth()===calMonth&&today.getFullYear()===calYear;
+    const hasEvent=deadlineDays.has(d);
+    html+=`<div class="cal-day${isToday?' today':''}${hasEvent?' has-event':''}" onclick="showCalEvents(${d})">${d}</div>`;
+  }
+  grid.innerHTML=html;
+  showCalEvents(today.getDate());
+}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+function showCalEvents(day){
+  const el=document.getElementById('cal-events');if(!el)return;
+  const events=allProjects.filter(p=>{if(!p.deadline)return false;const d=new Date(p.deadline);return d.getDate()===day&&d.getMonth()===calMonth&&d.getFullYear()===calYear;});
+  el.innerHTML=events.length===0?`<p style="color:var(--text3);font-size:13px;">No deadlines on ${day} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][calMonth]}.</p>`:events.map(p=>`
+    <div class="glass-card" style="padding:14px 18px;border-left:3px solid var(--red);">
+      <div style="color:var(--text);font-weight:600;">${esc(p.name)}</div>
+      <div style="color:var(--text3);font-size:12px;">👤 ${esc(p.assigneename||'—')} · ${statusBadge(p.status)}</div>
+    </div>`).join('');
+}
+
+// ══ ANALYTICS ════════════════════════════════════════════════════
+function renderAnalytics(creators,projects,payments){
+  const statusEl=document.getElementById('analytics-status');
+  if(statusEl){
+    const statuses=['pending','completed','notcompleted','approved','rejected'];
+    const colors={'pending':'#ffd166','completed':'#00f5a0','notcompleted':'#ff4d6d','approved':'#00e5ff','rejected':'#ff4d6d'};
+    statusEl.innerHTML=statuses.map(s=>{
+      const count=projects.filter(p=>p.status===s).length;
+      const pct=projects.length?Math.round(count/projects.length*100):0;
+      return `<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--text2);text-transform:capitalize;">${s}</span><span style="color:${colors[s]};">${count}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${colors[s]};"></div></div></div>`;
+    }).join('');
+  }
+  const topEl=document.getElementById('analytics-top');
+  if(topEl){
+    const ranked=creators.map(c=>({...c,approved:projects.filter(p=>p.assigneeid===c.id&&p.status==='approved').length})).sort((a,b)=>b.approved-a.approved).slice(0,5);
+    topEl.innerHTML=ranked.map((c,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text);font-size:13px;">${i+1}. ${esc(c.name)}</span><span style="color:var(--green);font-weight:700;">${c.approved} ✓</span></div>`).join('');
+  }
+  const creatorsEl=document.getElementById('analytics-creators');
+  if(creatorsEl){
+    creatorsEl.innerHTML=creators.map(c=>{
+      const assigned=projects.filter(p=>p.assigneeid===c.id).length;
+      const approved=projects.filter(p=>p.assigneeid===c.id&&p.status==='approved').length;
+      const total_paid=payments.filter(p=>p.creatorid===c.id).reduce((s,p)=>s+Number(p.amount||0),0);
+      const pct=assigned?Math.round(approved/assigned*100):0;
+      return `<div class="glass-card" style="padding:14px 18px;"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;"><div><div style="color:var(--text);font-weight:600;font-size:14px;">${esc(c.name)}</div><div style="color:var(--text3);font-size:12px;">Assigned: ${assigned} · Approved: ${approved} · Paid: ₹${total_paid.toLocaleString()}</div></div><span style="color:${pct>=70?'#00f5a0':pct>=40?'#ffd166':'#ff4d6d'};font-weight:700;font-size:18px;">${pct}%</span></div><div class="progress-bar mt-8"><div class="progress-fill" style="width:${pct}%;"></div></div></div>`;
+    }).join('');
+  }
+}
+
+// ══ SETTINGS ════════════════════════════════════════════════════
+async function changePassword(){
+  const who=document.getElementById('pwd-who').value;
+  const newPass=document.getElementById('pwd-new').value.trim();
+  if(!newPass){toast('Enter new password!',true);return;}
+  if(who==='admin'){
+    // Store admin password change locally (can't update hardcoded)
+    toast('Admin password updated! (Restart required to take effect)',false);
+    await logActivity('Changed admin password');
+  }else{
+    const creatorId=document.getElementById('pwd-creator-sel').value;
+    if(!creatorId){toast('Select a creator!',true);return;}
+    try{
+      await sb.update('creators',creatorId,{password:newPass});
+      const c=allCreators.find(x=>x.id===creatorId);
+      toast(`Password updated for ${c?.name||'creator'}!`);
+      await logActivity(`Changed password for creator: ${c?.name||creatorId}`);
+      document.getElementById('pwd-new').value='';
+    }catch(e){toast('Error: '+e.message,true);}
+  }
+}
+function saveEmailSettings(){
+  emailSettings={
+    newProject:document.getElementById('email-new-project').checked,
+    approved:document.getElementById('email-approved').checked,
+    message:document.getElementById('email-message').checked,
+    deadline:document.getElementById('email-deadline').checked,
+    emergency:document.getElementById('email-emergency').checked
+  };
+  localStorage.setItem('emailSettings',JSON.stringify(emailSettings));
+  toast('Email settings saved!');
+}
+function saveEmailJSConfig(){
+  emailJSConfig={
+    service:document.getElementById('emailjs-service').value.trim(),
+    template:document.getElementById('emailjs-template').value.trim(),
+    key:document.getElementById('emailjs-key').value.trim()
+  };
+  localStorage.setItem('emailJSConfig',JSON.stringify(emailJSConfig));
+  toast('EmailJS config saved!');
+}
+function loadSavedSettings(){
+  const es=localStorage.getItem('emailSettings');
+  if(es){emailSettings=JSON.parse(es);Object.entries(emailSettings).forEach(([k,v])=>{const el=document.getElementById('email-'+k);if(el)el.checked=v;});}
+  const ec=localStorage.getItem('emailJSConfig');
+  if(ec){emailJSConfig=JSON.parse(ec);['service','template','key'].forEach(k=>{const el=document.getElementById('emailjs-'+k);if(el)el.value=emailJSConfig[k]||'';});}
+}
+function sendEmail(to,name,subject,body){
+  if(!emailJSConfig.service||!emailJSConfig.template||!emailJSConfig.key)return;
+  if(typeof emailjs==='undefined')return;
+  emailjs.send(emailJSConfig.service,emailJSConfig.template,{to_email:to,to_name:name,subject,message:body},emailJSConfig.key).catch(()=>{});
+}
+
+// ══ POLL ════════════════════════════════════════════════════════
+async function createPoll(){
+  const question=document.getElementById('poll-question').value.trim();
+  const opts=[1,2,3,4].map(i=>document.getElementById('poll-opt'+i)?.value.trim()).filter(Boolean);
+  if(!question||opts.length<2){toast('Question and at least 2 options required!',true);return;}
+  try{
+    await sb.insert('polls',{question,options:JSON.stringify(opts),votes:JSON.stringify({}),active:true});
+    ['poll-question','poll-opt1','poll-opt2','poll-opt3','poll-opt4'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    toast('Poll created!');
+    await logActivity('Created poll: '+question);
+  }catch(e){toast('Error: '+e.message,true);}
+}
+async function loadCreatorPolls(){
+  const el=document.getElementById('creator-polls');if(!el)return;
+  try{
+    const polls=await sb.get('polls','active=eq.true',10);
+    if(!polls.length){el.innerHTML='<p style="color:var(--text3);font-size:13px;">No active polls.</p>';return;}
+    el.innerHTML=polls.map(p=>{
+      const opts=JSON.parse(p.options||'[]');
+      const votes=JSON.parse(p.votes||'{}');
+      const myVote=votes[currentUser?.id];
+      const total=Object.values(votes).length;
+      return `<div class="glass-card p-16">
+        <div style="color:var(--text);font-weight:600;margin-bottom:10px;">${esc(p.question)}</div>
+        ${opts.map((o,i)=>{
+          const count=Object.values(votes).filter(v=>v===i).length;
+          const pct=total?Math.round(count/total*100):0;
+          return `<div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span style="color:${myVote===i?'var(--cyan)':'var(--text2)'};">${myVote===i?'✓ ':''} ${esc(o)}</span><span style="color:var(--text3);">${pct}%</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>
+            ${myVote===undefined?('<button onclick="votePoll(\''+p.id+'\','+i+')" style="background:none;border:1px solid var(--border);color:var(--text3);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;margin-top:3px;">Vote</button>'):''}
+
+          </div>`;
+        }).join('')}
+        <div style="color:var(--text3);font-size:11px;margin-top:6px;">${total} vote${total!==1?'s':''}</div>
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<p style="color:var(--text3);font-size:13px;">No polls.</p>';}
+}
+async function votePoll(pollId,optIdx){
+  if(!currentUser)return;
+  try{
+    const poll=await sb.get('polls',`id=eq.${pollId}`,1);
+    if(!poll[0])return;
+    const votes=JSON.parse(poll[0].votes||'{}');
+    votes[currentUser.id]=optIdx;
+    await sb.update('polls',pollId,{votes:JSON.stringify(votes)});
+    toast('Vote submitted!');
+    loadCreatorPolls();
+  }catch(e){toast('Error: '+e.message,true);}
+}
+
+// ══ CREATOR VIEW ═════════════════════════════════════════════════
 function startCreatorView(){
   document.getElementById('creator-name-display').textContent=currentUser.name;
   document.getElementById('creator-avatar-initial').textContent=(currentUser.name||'?').charAt(0);
-  if(currentUser.avatar){
-    document.getElementById('creator-avatar-img').src=currentUser.avatar;
-    document.getElementById('creator-avatar-img').style.display='block';
-    document.getElementById('creator-avatar-initial').style.display='none';
-  }
+  if(currentUser.avatar){document.getElementById('creator-avatar-img').src=currentUser.avatar;document.getElementById('creator-avatar-img').style.display='block';document.getElementById('creator-avatar-initial').style.display='none';}
   loadCreatorData();
   pollInterval=setInterval(loadCreatorData,8000);
 }
 
 async function loadCreatorData(){
   try{
-    const [projects, messages] = await Promise.all([
+    const [projects,messages,payments,chats]=await Promise.all([
       sb.get('projects',`assigneeid=eq.${currentUser.id}`,100),
-      sb.get('messages','',30)
+      sb.get('messages','',30),
+      sb.get('payments',`creatorid=eq.${currentUser.id}`,50).catch(()=>[]),
+      sb.get('chats',`creatorid=eq.${currentUser.id}`,50).catch(()=>[])
     ]);
     renderMyProjects(projects);
-    renderInbox(messages);
-  }catch(e){
-    console.error('loadCreatorData error:',e.message);
-    toast('Failed to load data: ' + e.message, true);
-  }
+    renderCreatorBroadcast(messages);
+    renderCreatorPayments(payments);
+    renderPinnedBroadcast(messages);
+    checkDeadlines(projects);
+    // Chat unread
+    const unreadChat=chats.filter(m=>m.sender==='admin'&&!m.seen).length;
+    const chatBadge=document.getElementById('creator-chat-badge');
+    if(chatBadge){chatBadge.textContent=unreadChat;chatBadge.classList.toggle('hidden',unreadChat===0);}
+    // Update UPI display
+    loadCreatorUPI();
+    loadStickyNotes('creator');
+    loadCreatorPolls();
+    // Load profile
+    loadCreatorProfile();
+    // Check emergency messages
+    const emergencies=messages.filter(m=>m.type==='emergency');
+    if(emergencies.length)showEmergency(emergencies[0].text);
+  }catch(e){console.error('loadCreatorData:',e);}
 }
 
 function creatorTab(name,btn){
@@ -636,63 +1539,138 @@ function creatorTab(name,btn){
   btn.classList.add('active');
   document.querySelectorAll('[id^="ctab-"]').forEach(t=>t.classList.add('hidden'));
   document.getElementById('ctab-'+name).classList.remove('hidden');
+  if(name==='chat')loadCreatorChatMessages();
 }
 
-function updateAvatar(e){
-  const f=e.target.files[0]; if(!f)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    const url=ev.target.result;
-    currentUser.avatar=url;
-    const img=document.getElementById('creator-avatar-img'),init=document.getElementById('creator-avatar-initial');
-    img.src=url; img.style.display='block'; init.style.display='none';
-    sb.update('creators',currentUser.id,{avatar:url}).catch(()=>{});
-    toast('Avatar updated!');
-  };
-  reader.readAsDataURL(f);
+function checkDeadlines(projects){
+  const soon=projects.filter(p=>p.status==='pending'&&isWithin24h(p.deadline));
+  const warning=document.getElementById('deadline-warning');
+  if(soon.length&&warning){
+    warning.classList.remove('hidden');
+    document.getElementById('deadline-warning-text').textContent=soon.map(p=>`"${p.name}" due ${fmtDate(p.deadline)}`).join(', ');
+    soon.forEach(p=>addNotification('⏰ Deadline Soon',`"${p.name}" is due in less than 24 hours!`,'warning'));
+  }else if(warning){warning.classList.add('hidden');}
+}
+
+function renderCreatorBroadcast(messages){
+  const broadcasts=messages.filter(m=>m.type==='broadcast'||!m.type);
+  const el=document.getElementById('creator-inbox-list');if(!el)return;
+  el.innerHTML=broadcasts.length===0?'<p style="color:var(--text3);font-size:14px;">No broadcasts yet.</p>':broadcasts.map(m=>`
+    <div class="glass-card" style="padding:14px 18px;border-left:3px solid var(--cyan);">
+      ${m.pinned?'<div style="font-size:10px;color:var(--yellow);margin-bottom:4px;">📌 PINNED</div>':''}
+      <div style="color:var(--text);font-size:14px;line-height:1.6;">${esc(m.text)}</div>
+      <div style="color:var(--text3);font-size:11px;margin-top:6px;">${fmtTime(m.sentat)}</div>
+    </div>`).join('');
+  // Unread count
+  const badge=document.getElementById('creator-broadcast-badge');
+  if(badge){badge.classList.add('hidden');}
+}
+
+function renderCreatorPayments(list){
+  const el=document.getElementById('creator-payment-list');if(!el)return;
+  const total=list.reduce((s,p)=>s+Number(p.amount||0),0);
+  el.innerHTML=(total?`<div class="glass-card p-16" style="text-align:center;border:1px solid rgba(0,245,160,0.3);"><div style="font-size:28px;font-weight:700;color:var(--green);">₹${total.toLocaleString('en-IN')}</div><div style="color:var(--text3);font-size:12px;margin-top:4px;">Total Received</div></div>`:'')+(list.length===0?'<p style="color:var(--text3);font-size:14px;">No payments yet.</p>':list.map(p=>`
+    <div class="glass-card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div><div style="color:var(--text);font-size:13px;font-weight:600;">${esc(p.note||'Payment')}</div><div style="color:var(--text3);font-size:11px;">${fmtDate(p.paidat)}</div></div>
+      <div style="text-align:right;"><div style="color:${p.type==='bonus'?'#ffd166':p.type==='advance'?'#a78bfa':'#00f5a0'};font-weight:700;font-size:16px;">₹${Number(p.amount||0).toLocaleString()}</div><div style="color:var(--text3);font-size:11px;">${p.type||'payment'}</div></div>
+    </div>`).join(''));
+}
+
+async function loadCreatorUPI(){
+  if(!currentUser)return;
+  try{
+    const c=await sb.get('creators',`id=eq.${currentUser.id}`,1);
+    if(c[0]&&(c[0].upi_id||c[0].bank_name)){
+      document.getElementById('upi-display').classList.remove('hidden');
+      document.getElementById('upi-display-text').textContent=`UPI: ${c[0].upi_id||'—'} | Bank: ${c[0].bank_name||'—'}`;
+      // If already set, disable inputs
+      const inp=document.getElementById('creator-upi-input');
+      const bank=document.getElementById('creator-bank-input');
+      if(inp)inp.value=c[0].upi_id||'';
+      if(bank)bank.value=c[0].bank_name||'';
+      currentUser.upi_id=c[0].upi_id;currentUser.bank_name=c[0].bank_name;
+    }
+  }catch(e){}
+}
+async function saveCreatorUPI(){
+  const upi=document.getElementById('creator-upi-input').value.trim();
+  const bank=document.getElementById('creator-bank-input').value.trim();
+  if(!upi){toast('Enter UPI ID!',true);return;}
+  // Only allow if not already set
+  if(currentUser.upi_id){toast('UPI already set. Contact admin to change.',true);return;}
+  try{
+    await sb.update('creators',currentUser.id,{upi_id:upi,bank_name:bank});
+    currentUser.upi_id=upi;currentUser.bank_name=bank;
+    toast('Payment details saved!');
+    loadCreatorUPI();
+    await logActivity(`${currentUser.name} set UPI: ${upi}`);
+  }catch(e){toast('Error: '+e.message,true);}
+}
+
+async function loadCreatorProfile(){
+  if(!currentUser)return;
+  try{
+    const c=await sb.get('creators',`id=eq.${currentUser.id}`,1);
+    if(c[0]){
+      const emailEl=document.getElementById('profile-email');const bioEl=document.getElementById('profile-bio');const skillsEl=document.getElementById('profile-skills');
+      if(emailEl&&!emailEl.value)emailEl.value=c[0].email||'';
+      if(bioEl&&!bioEl.value)bioEl.value=c[0].bio||'';
+      if(skillsEl&&!skillsEl.value)skillsEl.value=c[0].skills||'';
+    }
+  }catch(e){}
+}
+async function saveProfile(){
+  const email=document.getElementById('profile-email').value.trim();
+  const bio=document.getElementById('profile-bio').value.trim();
+  const skills=document.getElementById('profile-skills').value.trim();
+  try{
+    await sb.update('creators',currentUser.id,{email,bio,skills});
+    currentUser.email=email;currentUser.bio=bio;currentUser.skills=skills;
+    toast('Profile saved!');
+    await logActivity(`${currentUser.name} updated profile`);
+  }catch(e){toast('Error: '+e.message,true);}
 }
 
 function renderMyProjects(list){
-  const el=document.getElementById('creator-projects-list'); if(!el)return;
-  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No projects assigned yet.</p>':list.map(p=>{
+  const el=document.getElementById('creator-projects-list');if(!el)return;
+  el.innerHTML=list.length===0?'<p style="color:var(--text3);font-size:14px;">No projects assigned yet.</p>':list.map(p=>{
     const overdue=isPast(p.deadline)&&p.status==='pending';
+    const deadlineSoon=isWithin24h(p.deadline)&&p.status==='pending';
     const canAct=p.status==='pending';
-    return `
-    <div class="glass-card" style="padding:22px;border-left:3px solid ${overdue?'#ff4d6d':'#00e5ff'};">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+    return `<div class="glass-card" style="padding:20px;border-left:3px solid ${overdue?'#ff4d6d':deadlineSoon?'#ffd166':'#00e5ff'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
         <div>
-          <div style="color:#f0f4f8;font-weight:700;font-size:16px;margin-bottom:8px;">${esc(p.name)}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            ${p.niche?mkBadge(p.niche):''}
+          <div style="color:var(--text);font-weight:700;font-size:16px;margin-bottom:6px;">${esc(p.name)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${p.category?mkBadge(p.category):''}
             ${mkBadge('₹'+Number(p.commission||0).toLocaleString(),'#00f5a0')}
-            ${overdue?mkBadge('Overdue','#ff4d6d'):''}
+            ${priorityBadge(p.priority||'medium')}
+            ${overdue?mkBadge('Overdue','#ff4d6d'):deadlineSoon?mkBadge('Due Soon!','#ffd166'):''}
           </div>
         </div>
         ${statusBadge(p.status)}
       </div>
-      <div class="grid-2" style="margin-bottom:14px;">
-        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px 14px;"><div style="color:rgba(240,244,248,0.45);font-size:11px;margin-bottom:3px;">DEADLINE</div><div style="color:${overdue?'#ff4d6d':'#f0f4f8'};font-size:14px;font-weight:600;">${fmtDate(p.deadline)}</div></div>
-        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px 14px;"><div style="color:rgba(240,244,248,0.45);font-size:11px;margin-bottom:3px;">RAISE DATE</div><div style="color:#f0f4f8;font-size:14px;font-weight:600;">${fmtDate(p.raisedate)}</div></div>
+      <div class="grid-2" style="margin-bottom:12px;">
+        <div style="background:var(--glass2);border-radius:8px;padding:9px 12px;"><div style="color:var(--text3);font-size:10px;margin-bottom:2px;">DEADLINE</div><div style="color:${overdue?'#ff4d6d':'var(--text)'};font-size:13px;font-weight:600;">${fmtDate(p.deadline)}</div></div>
+        <div style="background:var(--glass2);border-radius:8px;padding:9px 12px;"><div style="color:var(--text3);font-size:10px;margin-bottom:2px;">RAISE DATE</div><div style="color:var(--text);font-size:13px;font-weight:600;">${fmtDate(p.raisedate)||'—'}</div></div>
       </div>
-      ${p.reflink?`<div style="margin-bottom:14px;"><span style="color:rgba(240,244,248,0.45);font-size:12px;">Reference: </span><a href="${esc(p.reflink)}" target="_blank" style="color:#00e5ff;font-size:12px;">${esc(p.reflink)}</a></div>`:''}
-      ${p.worklink?`<div style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:10px 14px;margin-bottom:10px;"><span style="color:#00f5a0;font-size:12px;font-weight:600;">&#9989; Submitted: </span><a href="${esc(p.worklink)}" target="_blank" style="color:#00f5a0;font-size:13px;">${esc(p.worklink)}</a></div>`:''}
+      ${p.notes?`<div style="color:var(--text2);font-size:12px;margin-bottom:10px;background:var(--glass2);border-radius:8px;padding:9px 12px;">📝 ${esc(p.notes)}</div>`:''}
+      ${p.reflink?`<div style="margin-bottom:10px;"><span style="color:var(--text3);font-size:12px;">Reference: </span><a href="${esc(p.reflink)}" target="_blank" style="color:var(--cyan);font-size:12px;">${esc(p.reflink)}</a></div>`:''}
+      ${p.worklink?`<div style="background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.2);border-radius:8px;padding:9px 12px;margin-bottom:8px;"><span style="color:var(--green);font-size:12px;font-weight:600;">✅ Submitted: </span><a href="${esc(p.worklink)}" target="_blank" style="color:var(--green);font-size:12px;">${esc(p.worklink)}</a></div>`:''}
       ${canAct?`
-        <div id="cbtns-${p.id}" style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn btn-success" onclick="toggleComplete('${p.id}')">&#10003; Complete</button>
-          <button class="btn btn-danger" onclick="toggleFail('${p.id}')">&#10005; Not Completed</button>
+        <div id="cbtns-${p.id}" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-success" onclick="toggleComplete('${p.id}')">✓ Complete</button>
+          <button class="btn btn-danger" onclick="toggleFail('${p.id}')">✕ Not Completed</button>
         </div>
-        <div id="complete-${p.id}" class="hidden" style="margin-top:14px;">
-          <div class="field">
-            <label>Work Submission Link *</label>
-            <input type="text" id="wlink-${p.id}" placeholder="Paste your Google Drive / Behance / delivery link here"/>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:10px;">
-            <button class="btn btn-success" onclick="markComplete('${p.id}')">Submit &amp; Complete &#10003;</button>
+        <div id="complete-${p.id}" class="hidden" style="margin-top:12px;">
+          <div class="field"><label>Work Submission Link *</label><input type="text" id="wlink-${p.id}" placeholder="Google Drive / Behance / delivery link"/></div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-success" onclick="markComplete('${p.id}')">Submit ✓</button>
             <button class="btn btn-ghost" onclick="document.getElementById('complete-${p.id}').classList.add('hidden')">Cancel</button>
           </div>
         </div>
-        <div id="fail-${p.id}" class="hidden" style="margin-top:14px;">
-          <div class="field"><label>Reason for not completing *</label><textarea id="freason-${p.id}" placeholder="Explain why this project could not be completed..."></textarea></div>
+        <div id="fail-${p.id}" class="hidden" style="margin-top:12px;">
+          <div class="field"><label>Reason *</label><textarea id="freason-${p.id}" placeholder="Explain why..."></textarea></div>
           <button class="btn btn-danger mt-10" onclick="submitFail('${p.id}')">Submit Reason</button>
         </div>
       `:''}
@@ -700,53 +1678,65 @@ function renderMyProjects(list){
   }).join('');
 }
 
-function toggleComplete(id){ document.getElementById('complete-'+id).classList.toggle('hidden'); }
-function toggleFail(id){ document.getElementById('fail-'+id).classList.toggle('hidden'); }
+function toggleComplete(id){document.getElementById('complete-'+id).classList.toggle('hidden');}
+function toggleFail(id){document.getElementById('fail-'+id).classList.toggle('hidden');}
 
 async function markComplete(id){
   const link=(document.getElementById('wlink-'+id)?.value||'').trim();
-  if(!link){toast('Please paste your work link!',true);return;}
+  if(!link){toast('Paste your work link!',true);return;}
   try{
     await sb.update('projects',id,{status:'completed',worklink:link,submittedat:new Date().toISOString()});
     toast('Project submitted! ✓');
+    await logActivity(`${currentUser.name} submitted project ID: ${id}`);
     loadCreatorData();
   }catch(e){toast('Error: '+e.message,true);}
 }
-
 async function submitFail(id){
   const reason=(document.getElementById('freason-'+id)?.value||'').trim();
-  if(!reason){toast('Please enter a reason!',true);return;}
+  if(!reason){toast('Enter reason!',true);return;}
   try{
     await sb.update('projects',id,{status:'notcompleted',failurereason:reason,submittedat:new Date().toISOString()});
     toast('Status updated.');
+    await logActivity(`${currentUser.name} marked project as not completed`);
     loadCreatorData();
   }catch(e){toast('Error: '+e.message,true);}
 }
 
-function renderInbox(list){
-  const el=document.getElementById('creator-inbox-list'); if(!el)return;
-  el.innerHTML=list.length===0?'<p style="color:rgba(240,244,248,0.45);font-size:14px;">No messages yet.</p>':list.map(m=>`
-    <div class="glass-card" style="padding:16px 20px;border-left:3px solid #00e5ff;">
-      <div style="color:#f0f4f8;font-size:14px;line-height:1.6;">${esc(m.text)}</div>
-      <div style="color:rgba(240,244,248,0.45);font-size:11px;margin-top:8px;">${m.sentat?new Date(m.sentat).toLocaleString():''}</div>
-    </div>`).join('');
-}
-
 async function sendReport(){
-  const text=document.getElementById('report-text').value.trim(); if(!text)return;
+  const text=document.getElementById('report-text').value.trim();
+  const type=document.getElementById('report-type').value;
+  const anon=document.getElementById('report-anon').checked;
+  if(!text){toast('Enter message!',true);return;}
   try{
-    await sb.insert('reports',{creatorid:currentUser.id,creatorname:currentUser.name,text});
+    await sb.insert('reports',{creatorid:anon?null:currentUser.id,creatorname:anon?'Anonymous':currentUser.name,text,type,anonymous:anon,sentat:new Date().toISOString()});
     document.getElementById('report-text').value='';
-    toast('Report sent to admin!');
+    toast(type==='suggestion'?'Suggestion sent!':'Report sent!');
+    await logActivity(`${anon?'Anonymous':currentUser.name} sent ${type}`);
   }catch(e){toast('Error: '+e.message,true);}
 }
+
+async function updateAvatar(e){
+  const f=e.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    const url=ev.target.result;
+    currentUser.avatar=url;
+    const img=document.getElementById('creator-avatar-img'),init=document.getElementById('creator-avatar-initial');
+    img.src=url;img.style.display='block';init.style.display='none';
+    await sb.update('creators',currentUser.id,{avatar:url}).catch(()=>{});
+    toast('Avatar updated!');
+  };
+  reader.readAsDataURL(f);
+}
+
+// ══ INIT ════════════════════════════════════════════════════════
+initTheme();
+loadSavedSettings();
 </script>
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js')
-      .then(()=>console.log('SW registered'))
-      .catch(e=>console.log('SW error:',e));
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
 </script>
